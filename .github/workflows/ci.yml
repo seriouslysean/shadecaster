@@ -3,10 +3,6 @@ name: CI
 on:
   pull_request:
     branches: ['**']
-  push:
-    # Don't run on main since deploy.yml handles that
-    branches-ignore:
-      - main
 
 permissions:
   contents: read
