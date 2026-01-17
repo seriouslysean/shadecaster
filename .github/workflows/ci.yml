@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: ['**']
   push:
-    branches: ['**']
     # Don't run on main since deploy.yml handles that
     branches-ignore:
       - main
