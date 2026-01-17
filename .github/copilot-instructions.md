@@ -4,7 +4,7 @@ This file provides context and guidelines for GitHub Copilot when generating cod
 
 ## Core Validation
 
-**IMPORTANT**: See [../.agents](../.agents) for complete validation workflow and project architecture.
+**IMPORTANT**: See [../AGENTS.md](../AGENTS.md) for complete validation workflow and project architecture.
 
 Before committing any code, ensure all validation steps pass:
 
@@ -216,10 +216,10 @@ async function processImage(imageData: ImageData): Promise<ProcessedData> {
 
 For complete details, see:
 
-- [../.agents](../.agents) - Core validation workflow and architecture
+- [../AGENTS.md](../AGENTS.md) - Core validation workflow and architecture
 - [../CLAUDE.md](../CLAUDE.md) - Claude-specific workflows (if using Claude)
-- [../README.md](../README.md) - Project overview
-- [../TESTING.md](../TESTING.md) - Testing guide
+- [../docs/README.md](../docs/README.md) - Project overview
+- [../docs/TESTING.md](../docs/TESTING.md) - Testing guide
 
 ## Quick Reference
 

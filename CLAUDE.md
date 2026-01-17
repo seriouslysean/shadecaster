@@ -4,13 +4,13 @@ This guide is specifically for Claude Code agents working on the Shadecaster pro
 
 ## Quick Start
 
-**IMPORTANT**: Read [.agents](./.agents) first for core validation workflows and project architecture.
+**IMPORTANT**: Read [./AGENTS.md](./AGENTS.md) first for core validation workflows and project architecture.
 
 This document covers Claude-specific workflows and best practices.
 
 ## Validation Workflow
 
-For every change you make, follow the validation workflow in [.agents](./.agents):
+For every change you make, follow the validation workflow in [./AGENTS.md](./AGENTS.md):
 
 1. Run `npm run lint`
 2. Run `npm run type-check`
@@ -127,7 +127,7 @@ npm run test:e2e
 
 ## Key Project Details
 
-See [.agents](./.agents) for complete architecture details. Quick reference:
+See [./AGENTS.md](./AGENTS.md) for complete architecture details. Quick reference:
 
 - **Client-side only**: All processing happens in browser
 - **Binary STL format**: Efficient file generation
@@ -212,17 +212,17 @@ When creating commits:
 
 ## Resources
 
-- [.agents](./.agents) - Core validation workflow (READ THIS FIRST)
-- [README.md](./README.md) - Project overview
-- [TESTING.md](./TESTING.md) - Testing guide
+- [AGENTS.md](./AGENTS.md) - Core validation workflow (READ THIS FIRST)
+- [docs/README.md](./docs/README.md) - Project overview
+- [docs/TESTING.md](./docs/TESTING.md) - Testing guide
 - [.github/copilot-instructions.md](./.github/copilot-instructions.md) - GitHub Copilot context
 
 ## Questions?
 
 If you're unsure about:
-- Architecture decisions → Read [.agents](./.agents)
-- Testing approach → Read [TESTING.md](./TESTING.md)
-- Project goals → Read [README.md](./README.md)
-- Validation steps → Read [.agents](./.agents)
+- Architecture decisions → Read [AGENTS.md](./AGENTS.md)
+- Testing approach → Read [docs/TESTING.md](./docs/TESTING.md)
+- Project goals → Read [docs/README.md](./docs/README.md)
+- Validation steps → Read [AGENTS.md](./AGENTS.md)
 
 Always validate your changes before committing!
