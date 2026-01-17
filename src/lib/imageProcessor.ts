@@ -151,8 +151,8 @@ export function drawPreview(
   ctx.drawImage(image, 0, 0);
 
   // Draw radial samples overlay
-  ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
 
   const centerX = canvas.width / 2;

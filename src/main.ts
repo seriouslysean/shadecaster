@@ -24,6 +24,22 @@ const thresholdValue = document.getElementById('threshold-value') as HTMLSpanEle
 
 let currentImage: HTMLImageElement | null = null;
 let currentSamples: RadialSample[] = [];
+let currentCropSize = 0;
+
+const cropImageToSquare = (image: HTMLImageElement): HTMLCanvasElement => {
+  const size = Math.min(image.width, image.height);
+  const offsetX = (image.width - size) / 2;
+  const offsetY = (image.height - size) / 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Failed to create square crop.');
+  }
+  ctx.drawImage(image, offsetX, offsetY, size, size, 0, 0, size, size);
+  return canvas;
+};
 
 // Update range displays
 angularResolutionInput.addEventListener('input', () => {
@@ -39,15 +55,39 @@ imageUpload.addEventListener('change', async (e) => {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
+  currentImage = null;
+  currentSamples = [];
+  previewSection.classList.add('hidden');
+  downloadBtn.classList.add('hidden');
+  processBtn.disabled = true;
+
   const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
   img.onload = () => {
-    currentImage = img;
-    processBtn.disabled = false;
-    downloadBtn.classList.add('hidden');
-    infoText.textContent = 'Image loaded! Click "Process Image" to generate preview';
+    URL.revokeObjectURL(objectUrl);
+    try {
+      const squareCanvas = cropImageToSquare(img);
+      currentCropSize = squareCanvas.width;
+      const squareImage = new Image();
+      squareImage.onload = () => {
+        currentImage = squareImage;
+        processBtn.disabled = false;
+        downloadBtn.classList.add('hidden');
+        infoText.textContent = `Image loaded and cropped to ${currentCropSize}×${currentCropSize}.`;
+      };
+      squareImage.src = squareCanvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Error preparing image:', error);
+      infoText.textContent = 'Could not crop image. Please try another file.';
+    }
   };
 
-  img.src = URL.createObjectURL(file);
+  img.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+    infoText.textContent = 'Could not read the image file. Please try another file.';
+  };
+
+  img.src = objectUrl;
 });
 
 // Process image
@@ -69,7 +109,8 @@ processBtn.addEventListener('click', async () => {
     previewSection.classList.remove('hidden');
 
     downloadBtn.classList.remove('hidden');
-    infoText.textContent = 'Preview ready! Adjust parameters if needed, then download STL';
+    infoText.textContent =
+      'Preview ready. Adjust parameters if needed, then download the STL.';
   } catch (error) {
     console.error('Error processing image:', error);
     infoText.textContent = 'Error processing image. Please try again.';
@@ -94,7 +135,7 @@ downloadBtn.addEventListener('click', () => {
   const blob = exportSTL(currentSamples, params);
   downloadSTL(blob, 'shadow-lamp.stl');
 
-  infoText.textContent = 'STL downloaded! Ready to 3D print 🎉';
+  infoText.textContent = 'STL downloaded. Ready to 3D print.';
 });
 
 // Allow reprocessing when parameters change
