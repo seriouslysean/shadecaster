@@ -141,5 +141,5 @@ lsof -ti:4321 | xargs kill
 ## See Also
 - [docs/README.md](./docs/README.md) - Project overview and usage
 - [docs/TESTING.md](./docs/TESTING.md) - Detailed testing guide
-- [docs/CLAUDE.md](./docs/CLAUDE.md) - Claude-specific workflows (if using Claude)
+- [CLAUDE.md](./CLAUDE.md) - Claude-specific workflows (if using Claude)
 - [.github/copilot-instructions.md](./.github/copilot-instructions.md) - GitHub Copilot context (if using Copilot)
