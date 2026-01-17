@@ -11,7 +11,8 @@
     "lint": "eslint . --ext .ts,.astro",
     "lint:fix": "eslint . --ext .ts,.astro --fix",
     "type-check": "tsc --noEmit",
-    "test": "npm run test:e2e",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "echo 'No unit tests yet' && exit 0",
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
     "ci": "npm run lint && npm run type-check && npm run build"

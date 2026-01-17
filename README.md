@@ -1,6 +1,6 @@
 # Shadecaster
 
-🕯️ **Browser-based shadow lamp STL generator**
+**Browser-based shadow lamp STL generator**
 
 Transform silhouette images into 3D-printable shadow lamps that cast beautiful shadows when lit by a tealight candle.
 
