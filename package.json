@@ -1,0 +1,19 @@
+{
+  "name": "shadecaster",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Browser-based shadow lamp STL generator",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "keywords": ["astro", "stl", "3d-printing", "shadow-lamp"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "astro": "^5.16.11",
+    "typescript": "^5.9.3"
+  }
+}
