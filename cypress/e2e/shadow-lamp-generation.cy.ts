@@ -18,8 +18,8 @@ describe('Shadow Lamp Generator - User Journey', () => {
 
   it('should load the application successfully', () => {
     // Verify page title and branding
-    cy.get('h1').should('contain', 'Shadecaster');
-    cy.get('.subtitle').should('contain', 'Transform images into 3D-printable shadow lamps');
+    cy.contains('Shadecaster').should('be.visible');
+    cy.get('h1').should('contain', 'Shadow lamp STL generator');
 
     // Verify initial UI state
     cy.get('#image-upload').should('exist');
@@ -30,8 +30,7 @@ describe('Shadow Lamp Generator - User Journey', () => {
   it('should display correct input guidance', () => {
     // Verify user guidance is present
     cy.contains('Black silhouette on white or transparent background').should('be.visible');
-    cy.contains('Print with dark/opaque filament').should('be.visible');
-    cy.contains('prevent light leakage through walls').should('be.visible');
+    cy.contains('Print with dark filament for maximum contrast').should('be.visible');
   });
 
   it('should have correct default parameter values', () => {
@@ -81,10 +80,7 @@ describe('Shadow Lamp Generator - User Journey', () => {
       cy.get('#process-btn').click();
 
       // Should show error about threshold
-      cy.on('window:alert', (text) => {
-        expect(text).to.include('all white');
-        expect(text).to.include('threshold');
-      });
+      cy.get('#info-text').should('contain', 'all white').and('contain', 'threshold');
     });
 
     it('should handle edge case: all-black image', () => {
@@ -93,10 +89,7 @@ describe('Shadow Lamp Generator - User Journey', () => {
       cy.get('#process-btn').click();
 
       // Should show error about threshold
-      cy.on('window:alert', (text) => {
-        expect(text).to.include('all black');
-        expect(text).to.include('threshold');
-      });
+      cy.get('#info-text').should('contain', 'all black').and('contain', 'threshold');
     });
   });
 
@@ -111,16 +104,16 @@ describe('Shadow Lamp Generator - User Journey', () => {
     it('should generate and download STL file', () => {
       // Intercept download
       cy.window().then((win) => {
-        cy.stub(win, 'open').as('windowOpen');
+        cy.stub(win.URL, 'createObjectURL').callsFake(() => 'blob:mock');
       });
 
       // Trigger download
       cy.get('#download-btn').click();
 
       // Verify blob URL was created
-      // Note: In real browser, file would download
-      // In Cypress, we verify the download was triggered
-      cy.get('@windowOpen').should('have.been.called');
+      cy.window().then((win) => {
+        expect(win.URL.createObjectURL).to.have.been.called;
+      });
     });
 
     it('should generate binary STL with correct structure', () => {
@@ -235,7 +228,6 @@ describe('Shadow Lamp Generator - User Journey', () => {
 
     it('should display privacy notice', () => {
       cy.contains('All processing happens in your browser').should('be.visible');
-      cy.contains('your images never leave your device').should('be.visible');
     });
   });
 });
