@@ -2,7 +2,7 @@ name: Test
 
 on:
   workflow_run:
-    workflows: ['Type Check']
+    workflows: ['Lint']
     types: [completed]
 
 permissions:
