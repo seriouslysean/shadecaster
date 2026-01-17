@@ -1,0 +1,367 @@
+---
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shadecaster - Shadow Lamp STL Generator</title>
+    <meta name="description" content="Browser-based shadow lamp STL generator - convert images to 3D-printable shadow lamps" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 2rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: #667eea;
+        text-align: center;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 2rem;
+      }
+
+      .upload-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .upload-label {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background: #667eea;
+        color: white;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+
+      .upload-label:hover {
+        background: #5568d3;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .preview-section {
+        margin-bottom: 2rem;
+      }
+
+      .preview-canvas {
+        max-width: 100%;
+        border: 2px solid #e0e0e0;
+        border-radius: 0.5rem;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-size: 0.9rem;
+      }
+
+      input[type="number"],
+      input[type="range"] {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 0.25rem;
+        font-size: 1rem;
+      }
+
+      input[type="range"] {
+        padding: 0;
+      }
+
+      .range-value {
+        font-size: 0.85rem;
+        color: #777;
+        margin-top: 0.25rem;
+      }
+
+      .actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
+
+      button {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #5568d3;
+      }
+
+      .btn-secondary {
+        background: #48bb78;
+        color: white;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #38a169;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .info-text {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        margin-top: 1rem;
+      }
+
+      footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: #999;
+        font-size: 0.85rem;
+      }
+
+      footer a {
+        color: #667eea;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🕯️ Shadecaster</h1>
+      <p class="subtitle">Transform images into 3D-printable shadow lamps</p>
+
+      <div class="upload-section">
+        <label for="image-upload" class="upload-label">
+          📁 Upload Silhouette Image
+        </label>
+        <input type="file" id="image-upload" accept="image/*" />
+      </div>
+
+      <div id="preview-section" class="preview-section hidden">
+        <canvas id="preview-canvas" class="preview-canvas"></canvas>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <label for="dome-diameter">Dome Diameter (mm)</label>
+          <input type="number" id="dome-diameter" value="100" min="50" max="200" step="5" />
+        </div>
+
+        <div class="control-group">
+          <label for="dome-height">Dome Height (mm)</label>
+          <input type="number" id="dome-height" value="60" min="20" max="150" step="5" />
+        </div>
+
+        <div class="control-group">
+          <label for="fin-thickness">Fin Thickness (mm)</label>
+          <input type="number" id="fin-thickness" value="1.5" min="0.5" max="5" step="0.1" />
+        </div>
+
+        <div class="control-group">
+          <label for="base-height">Base Height (mm)</label>
+          <input type="number" id="base-height" value="10" min="5" max="30" step="1" />
+        </div>
+
+        <div class="control-group">
+          <label for="angular-resolution">
+            Angular Resolution
+            <span class="range-value" id="angular-value">72 fins</span>
+          </label>
+          <input type="range" id="angular-resolution" value="72" min="24" max="180" step="6" />
+        </div>
+
+        <div class="control-group">
+          <label for="threshold">
+            Image Threshold
+            <span class="range-value" id="threshold-value">128</span>
+          </label>
+          <input type="range" id="threshold" value="128" min="0" max="255" step="1" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="process-btn" class="btn-primary" disabled>
+          🔄 Process Image
+        </button>
+        <button id="download-btn" class="btn-secondary hidden">
+          💾 Download STL
+        </button>
+      </div>
+
+      <p id="info-text" class="info-text">Upload an image to get started</p>
+
+      <footer>
+        <p>Made with ❤️ for 3D printing enthusiasts | <a href="https://github.com/seriouslysean/shadecaster" target="_blank">GitHub</a></p>
+        <p>All processing happens in your browser - your images never leave your device</p>
+      </footer>
+    </div>
+
+    <script>
+      import { processImage, drawPreview } from '../lib/imageProcessor';
+      import { exportSTL, downloadSTL, type GeometryParams } from '../lib/stlGenerator';
+
+      // DOM elements
+      const imageUpload = document.getElementById('image-upload') as HTMLInputElement;
+      const previewSection = document.getElementById('preview-section') as HTMLDivElement;
+      const previewCanvas = document.getElementById('preview-canvas') as HTMLCanvasElement;
+      const processBtn = document.getElementById('process-btn') as HTMLButtonElement;
+      const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
+      const infoText = document.getElementById('info-text') as HTMLParagraphElement;
+
+      // Control elements
+      const domeDiameterInput = document.getElementById('dome-diameter') as HTMLInputElement;
+      const domeHeightInput = document.getElementById('dome-height') as HTMLInputElement;
+      const finThicknessInput = document.getElementById('fin-thickness') as HTMLInputElement;
+      const baseHeightInput = document.getElementById('base-height') as HTMLInputElement;
+      const angularResolutionInput = document.getElementById('angular-resolution') as HTMLInputElement;
+      const thresholdInput = document.getElementById('threshold') as HTMLInputElement;
+      const angularValue = document.getElementById('angular-value') as HTMLSpanElement;
+      const thresholdValue = document.getElementById('threshold-value') as HTMLSpanElement;
+
+      let currentImage: HTMLImageElement | null = null;
+      let currentSamples: any[] = [];
+
+      // Update range displays
+      angularResolutionInput.addEventListener('input', () => {
+        angularValue.textContent = `${angularResolutionInput.value} fins`;
+      });
+
+      thresholdInput.addEventListener('input', () => {
+        thresholdValue.textContent = thresholdInput.value;
+      });
+
+      // Handle image upload
+      imageUpload.addEventListener('change', async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        const img = new Image();
+        img.onload = () => {
+          currentImage = img;
+          processBtn.disabled = false;
+          downloadBtn.classList.add('hidden');
+          infoText.textContent = 'Image loaded! Click "Process Image" to generate preview';
+        };
+
+        img.src = URL.createObjectURL(file);
+      });
+
+      // Process image
+      processBtn.addEventListener('click', async () => {
+        if (!currentImage) return;
+
+        processBtn.disabled = true;
+        infoText.textContent = 'Processing image...';
+
+        try {
+          const params = {
+            angularResolution: parseInt(angularResolutionInput.value),
+            threshold: parseInt(thresholdInput.value),
+          };
+
+          currentSamples = await processImage(currentImage, params);
+          
+          drawPreview(previewCanvas, currentImage, currentSamples);
+          previewSection.classList.remove('hidden');
+          
+          downloadBtn.classList.remove('hidden');
+          infoText.textContent = 'Preview ready! Adjust parameters if needed, then download STL';
+        } catch (error) {
+          console.error('Error processing image:', error);
+          infoText.textContent = 'Error processing image. Please try again.';
+        } finally {
+          processBtn.disabled = false;
+        }
+      });
+
+      // Download STL
+      downloadBtn.addEventListener('click', () => {
+        if (currentSamples.length === 0) return;
+
+        const params: GeometryParams = {
+          domeDiameter: parseFloat(domeDiameterInput.value),
+          domeHeight: parseFloat(domeHeightInput.value),
+          finThickness: parseFloat(finThicknessInput.value),
+          baseHeight: parseFloat(baseHeightInput.value),
+          tealightDiameter: 38, // Standard tealight
+          tealightHeight: 15,   // Standard tealight
+        };
+
+        const blob = exportSTL(currentSamples, params);
+        downloadSTL(blob, 'shadow-lamp.stl');
+        
+        infoText.textContent = 'STL downloaded! Ready to 3D print 🎉';
+      });
+
+      // Allow reprocessing when parameters change
+      [thresholdInput, angularResolutionInput].forEach(input => {
+        input.addEventListener('change', () => {
+          if (currentImage) {
+            downloadBtn.classList.add('hidden');
+            infoText.textContent = 'Parameters changed - click "Process Image" to update preview';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
