@@ -14,6 +14,7 @@ export interface ProcessingParams {
 
 /**
  * Convert image to binary using threshold
+ * Handles transparency: fully transparent pixels are treated as light/gaps
  */
 async function imageToBinary(
   imageData: ImageData,
@@ -23,12 +24,23 @@ async function imageToBinary(
   const binary: boolean[][] = [];
 
   for (let y = 0; y < height; y++) {
-    binary[y] = [];
+    const row: boolean[] = [];
+    binary[y] = row;
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      // Convert to grayscale using luminance formula
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      binary[y][x] = gray < threshold;
+      const r = data[i] ?? 0;
+      const g = data[i + 1] ?? 0;
+      const b = data[i + 2] ?? 0;
+      const alpha = data[i + 3] ?? 255;
+
+      // Treat transparent pixels as light/gaps (not dark)
+      if (alpha < 128) {
+        row[x] = false;
+      } else {
+        // Convert to grayscale using luminance formula
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        row[x] = gray < threshold;
+      }
     }
   }
 
@@ -65,7 +77,7 @@ function radialSample(
       const y = Math.round(centerY + dy * r);
 
       if (x >= 0 && x < width && y >= 0 && y < height) {
-        if (binary[y][x]) {
+        if (binary[y]?.[x]) {
           // Dark pixel found
           maxDistance = r;
         }
@@ -100,6 +112,22 @@ export async function processImage(
 
   // Convert to binary
   const binary = await imageToBinary(imageData, params.threshold);
+
+  // Check for edge cases: all-white or all-black images
+  const hasAnyDarkPixels = binary.some((row) => row.some((pixel) => pixel));
+  const hasAnyLightPixels = binary.some((row) => row.some((pixel) => !pixel));
+
+  if (!hasAnyDarkPixels) {
+    throw new Error(
+      'Image is all white/transparent. Please provide an image with dark silhouette content. Try lowering the threshold.'
+    );
+  }
+
+  if (!hasAnyLightPixels) {
+    throw new Error(
+      'Image is all black. Please provide an image with a clear silhouette. Try raising the threshold.'
+    );
+  }
 
   // Perform radial sampling
   return radialSample(binary, params.angularResolution);

@@ -87,8 +87,8 @@ downloadBtn.addEventListener('click', () => {
     domeHeight: parseFloat(domeHeightInput.value),
     finThickness: parseFloat(finThicknessInput.value),
     baseHeight: parseFloat(baseHeightInput.value),
-    tealightDiameter: 38, // Standard tealight
-    tealightHeight: 15, // Standard tealight
+    ledMountDiameter: 21, // Standard tea light diameter
+    ledMountHeight: 15, // Standard tea light height
   };
 
   const blob = exportSTL(currentSamples, params);
