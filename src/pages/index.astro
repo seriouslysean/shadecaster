@@ -194,7 +194,13 @@
         <label for="image-upload" class="upload-label">
           📁 Upload Silhouette Image
         </label>
-        <input type="file" id="image-upload" accept="image/*" />
+        <input type="file" id="image-upload" accept="image/png,image/jpeg,image/jpg,image/webp" />
+        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: #666;">
+          <strong>Input format:</strong> Black silhouette on white or transparent background (PNG with transparency works best)
+        </p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+          <strong>Print with dark/opaque filament</strong> to prevent light leakage through walls
+        </p>
       </div>
 
       <div id="preview-section" class="preview-section hidden">
@@ -204,30 +210,30 @@
       <div class="controls">
         <div class="control-group">
           <label for="dome-diameter">Dome Diameter (mm)</label>
-          <input type="number" id="dome-diameter" value="100" min="50" max="200" step="5" />
+          <input type="number" id="dome-diameter" value="60" min="50" max="200" step="5" />
         </div>
 
         <div class="control-group">
           <label for="dome-height">Dome Height (mm)</label>
-          <input type="number" id="dome-height" value="60" min="20" max="150" step="5" />
+          <input type="number" id="dome-height" value="40" min="20" max="150" step="5" />
         </div>
 
         <div class="control-group">
           <label for="fin-thickness">Fin Thickness (mm)</label>
-          <input type="number" id="fin-thickness" value="1.5" min="0.5" max="5" step="0.1" />
+          <input type="number" id="fin-thickness" value="1.2" min="0.5" max="5" step="0.1" />
         </div>
 
         <div class="control-group">
           <label for="base-height">Base Height (mm)</label>
-          <input type="number" id="base-height" value="10" min="5" max="30" step="1" />
+          <input type="number" id="base-height" value="8" min="5" max="30" step="1" />
         </div>
 
         <div class="control-group">
           <label for="angular-resolution">
             Angular Resolution
-            <span class="range-value" id="angular-value">72 fins</span>
+            <span class="range-value" id="angular-value">180 fins</span>
           </label>
-          <input type="range" id="angular-resolution" value="72" min="24" max="180" step="6" />
+          <input type="range" id="angular-resolution" value="180" min="24" max="360" step="6" />
         </div>
 
         <div class="control-group">
