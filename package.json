@@ -7,13 +7,30 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "lint": "eslint . --ext .ts,.astro",
+    "lint:fix": "eslint . --ext .ts,.astro --fix",
+    "type-check": "tsc --noEmit",
+    "test": "npm run test:e2e",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "ci": "npm run lint && npm run type-check && npm run build"
   },
-  "keywords": ["astro", "stl", "3d-printing", "shadow-lamp"],
+  "keywords": [
+    "astro",
+    "stl",
+    "3d-printing",
+    "shadow-lamp"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
     "astro": "^5.16.11",
+    "cypress": "^15.9.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-astro": "^1.5.0",
     "typescript": "^5.9.3"
   }
 }

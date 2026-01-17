@@ -44,6 +44,27 @@ npm run build
 npm run preview
 ```
 
+### Testing
+
+```bash
+# Run all CI checks (lint + type-check + build)
+npm run ci
+
+# Run linting
+npm run lint
+
+# Run TypeScript type checking
+npm run type-check
+
+# Run E2E tests
+npm test
+
+# Open Cypress interactive mode
+npm run test:e2e:open
+```
+
+For detailed testing documentation, see [TESTING.md](./TESTING.md).
+
 ## Parameters
 
 - **Dome Diameter**: Overall diameter of the lamp (default: 60mm, range: 50-200mm)
