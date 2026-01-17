@@ -7,260 +7,369 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Shadecaster - Shadow Lamp STL Generator</title>
-    <meta name="description" content="Browser-based shadow lamp STL generator - convert images to 3D-printable shadow lamps" />
+    <meta
+      name="description"
+      content="Browser-based shadow lamp STL generator - convert images to 3D-printable shadow lamps"
+    />
     <style>
-      * {
+      :root {
+        color-scheme: light;
+      }
+
+      *,
+      *::before,
+      *::after {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: #fff;
+        color: #000;
         min-height: 100vh;
-        padding: 2rem;
-        color: #333;
       }
 
-      .container {
-        max-width: 1200px;
+      .page {
+        width: min(960px, 100%);
         margin: 0 auto;
-        background: white;
-        border-radius: 1rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        padding: 2rem;
+        padding: 2rem 1.5rem 3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
       }
 
-      h1 {
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-        color: #667eea;
-        text-align: center;
+      .page__header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
       }
 
-      .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
+      .page__title {
+        font-size: clamp(2rem, 6vw, 3rem);
+        letter-spacing: -0.02em;
       }
 
-      .upload-section {
-        text-align: center;
-        margin-bottom: 2rem;
+      .page__subtitle {
+        font-size: 1rem;
+        line-height: 1.5;
+        max-width: 44ch;
       }
 
-      .upload-label {
-        display: inline-block;
-        padding: 1rem 2rem;
-        background: #667eea;
-        color: white;
-        border-radius: 0.5rem;
-        cursor: pointer;
+      .card {
+        border: 1px solid #000;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .upload {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .upload__label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.25rem;
+        border: 1px solid #000;
         font-weight: 600;
-        transition: background 0.3s;
+        cursor: pointer;
+        background: #fff;
+        color: #000;
       }
 
-      .upload-label:hover {
-        background: #5568d3;
+      .upload__label:hover,
+      .upload__label:focus-visible {
+        background: #000;
+        color: #fff;
       }
 
-      input[type="file"] {
-        display: none;
+      .upload__input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
       }
 
-      .preview-section {
-        margin-bottom: 2rem;
+      .upload__meta {
+        display: grid;
+        gap: 0.5rem;
+        font-size: 0.9rem;
       }
 
-      .preview-canvas {
-        max-width: 100%;
-        border: 2px solid #e0e0e0;
-        border-radius: 0.5rem;
+      .upload__meta strong {
+        font-weight: 600;
+      }
+
+      .preview {
+        border: 1px solid #000;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .preview__canvas {
+        width: 100%;
+        height: auto;
         display: block;
-        margin: 0 auto;
       }
 
       .controls {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1rem;
-        margin-bottom: 2rem;
       }
 
-      .control-group {
+      .controls__group {
         display: flex;
         flex-direction: column;
+        gap: 0.5rem;
       }
 
-      label {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #555;
-        font-size: 0.9rem;
-      }
-
-      input[type="number"],
-      input[type="range"] {
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 0.25rem;
-        font-size: 1rem;
-      }
-
-      input[type="range"] {
-        padding: 0;
-      }
-
-      .range-value {
+      .controls__label {
         font-size: 0.85rem;
-        color: #777;
-        margin-top: 0.25rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .controls__input {
+        border: 1px solid #000;
+        padding: 0.65rem 0.75rem;
+        font-size: 1rem;
+        width: 100%;
+        background: #fff;
+        color: #000;
+      }
+
+      .controls__range {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .controls__value {
+        font-size: 0.85rem;
       }
 
       .actions {
         display: flex;
-        gap: 1rem;
-        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
       }
 
-      button {
-        padding: 1rem 2rem;
+      .button {
+        border: 1px solid #000;
+        padding: 0.85rem 1.25rem;
         font-size: 1rem;
         font-weight: 600;
-        border: none;
-        border-radius: 0.5rem;
+        background: #fff;
+        color: #000;
         cursor: pointer;
-        transition: all 0.3s;
       }
 
-      .btn-primary {
-        background: #667eea;
-        color: white;
+      .button:hover:not(:disabled),
+      .button:focus-visible:not(:disabled) {
+        background: #000;
+        color: #fff;
       }
 
-      .btn-primary:hover:not(:disabled) {
-        background: #5568d3;
-      }
-
-      .btn-secondary {
-        background: #48bb78;
-        color: white;
-      }
-
-      .btn-secondary:hover:not(:disabled) {
-        background: #38a169;
-      }
-
-      button:disabled {
-        opacity: 0.5;
+      .button:disabled {
+        opacity: 0.4;
         cursor: not-allowed;
+      }
+
+      .status {
+        font-size: 0.95rem;
+        border-left: 2px solid #000;
+        padding-left: 0.75rem;
+      }
+
+      .footer {
+        font-size: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .footer a {
+        color: inherit;
       }
 
       .hidden {
         display: none;
       }
 
-      .info-text {
-        text-align: center;
-        color: #999;
-        font-style: italic;
-        margin-top: 1rem;
+      :focus-visible {
+        outline: 2px solid #000;
+        outline-offset: 3px;
       }
 
-      footer {
-        margin-top: 2rem;
-        text-align: center;
-        color: #999;
-        font-size: 0.85rem;
-      }
+      @media (min-width: 1024px) {
+        .page {
+          padding: 3rem 2rem 4rem;
+        }
 
-      footer a {
-        color: #667eea;
-        text-decoration: none;
-      }
+        .controls {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
 
-      footer a:hover {
-        text-decoration: underline;
+        .actions {
+          flex-direction: row;
+          justify-content: flex-start;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🕯️ Shadecaster</h1>
-      <p class="subtitle">Transform images into 3D-printable shadow lamps</p>
-
-      <div class="upload-section">
-        <label for="image-upload" class="upload-label">
-          📁 Upload Silhouette Image
-        </label>
-        <input type="file" id="image-upload" accept="image/png,image/jpeg,image/jpg,image/webp" />
-        <p style="margin-top: 0.75rem; font-size: 0.85rem; color: #666;">
-          <strong>Input format:</strong> Black silhouette on white or transparent background (PNG with transparency works best)
+    <main class="page">
+      <header class="page__header">
+        <p>🕯️ Shadecaster</p>
+        <h1 class="page__title">Shadow lamp STL generator</h1>
+        <p class="page__subtitle">
+          Upload a high-contrast silhouette. We crop to a square automatically and generate a
+          tea light-ready shade so the projected shadow matches your image.
         </p>
-        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
-          <strong>Print with dark/opaque filament</strong> to prevent light leakage through walls
+      </header>
+
+      <section class="card">
+        <div class="upload">
+          <label for="image-upload" class="upload__label">Upload image</label>
+          <input
+            type="file"
+            id="image-upload"
+            class="upload__input"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+          />
+          <div class="upload__meta">
+            <p>
+              <strong>Image format:</strong> Black silhouette on white or transparent background.
+            </p>
+            <p>
+              <strong>Aspect ratio:</strong> We center-crop to a square during upload so the
+              silhouette stays undistorted.
+            </p>
+          </div>
+        </div>
+
+        <div id="preview-section" class="preview hidden">
+          <p><strong>Preview (square crop)</strong></p>
+          <canvas id="preview-canvas" class="preview__canvas"></canvas>
+        </div>
+
+        <div class="controls">
+          <div class="controls__group">
+            <label for="dome-diameter" class="controls__label">Dome diameter (mm)</label>
+            <input
+              type="number"
+              id="dome-diameter"
+              class="controls__input"
+              value="60"
+              min="50"
+              max="200"
+              step="5"
+            />
+          </div>
+
+          <div class="controls__group">
+            <label for="dome-height" class="controls__label">Dome height (mm)</label>
+            <input
+              type="number"
+              id="dome-height"
+              class="controls__input"
+              value="40"
+              min="20"
+              max="150"
+              step="5"
+            />
+          </div>
+
+          <div class="controls__group">
+            <label for="fin-thickness" class="controls__label">Fin thickness (mm)</label>
+            <input
+              type="number"
+              id="fin-thickness"
+              class="controls__input"
+              value="1.2"
+              min="0.5"
+              max="5"
+              step="0.1"
+            />
+          </div>
+
+          <div class="controls__group">
+            <label for="base-height" class="controls__label">Base height (mm)</label>
+            <input
+              type="number"
+              id="base-height"
+              class="controls__input"
+              value="8"
+              min="5"
+              max="30"
+              step="1"
+            />
+          </div>
+
+          <div class="controls__group controls__range">
+            <label for="angular-resolution" class="controls__label">Angular resolution</label>
+            <input
+              type="range"
+              id="angular-resolution"
+              class="controls__input"
+              value="180"
+              min="24"
+              max="360"
+              step="6"
+            />
+            <span class="controls__value" id="angular-value">180 fins</span>
+          </div>
+
+          <div class="controls__group controls__range">
+            <label for="threshold" class="controls__label">Image threshold</label>
+            <input
+              type="range"
+              id="threshold"
+              class="controls__input"
+              value="128"
+              min="0"
+              max="255"
+              step="1"
+            />
+            <span class="controls__value" id="threshold-value">128</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="process-btn" class="button" disabled>Process image</button>
+          <button id="download-btn" class="button hidden">Download STL</button>
+        </div>
+
+        <p id="info-text" class="status" aria-live="polite">
+          Upload an image to get started.
         </p>
-      </div>
+      </section>
 
-      <div id="preview-section" class="preview-section hidden">
-        <canvas id="preview-canvas" class="preview-canvas"></canvas>
-      </div>
-
-      <div class="controls">
-        <div class="control-group">
-          <label for="dome-diameter">Dome Diameter (mm)</label>
-          <input type="number" id="dome-diameter" value="60" min="50" max="200" step="5" />
-        </div>
-
-        <div class="control-group">
-          <label for="dome-height">Dome Height (mm)</label>
-          <input type="number" id="dome-height" value="40" min="20" max="150" step="5" />
-        </div>
-
-        <div class="control-group">
-          <label for="fin-thickness">Fin Thickness (mm)</label>
-          <input type="number" id="fin-thickness" value="1.2" min="0.5" max="5" step="0.1" />
-        </div>
-
-        <div class="control-group">
-          <label for="base-height">Base Height (mm)</label>
-          <input type="number" id="base-height" value="8" min="5" max="30" step="1" />
-        </div>
-
-        <div class="control-group">
-          <label for="angular-resolution">
-            Angular Resolution
-            <span class="range-value" id="angular-value">180 fins</span>
-          </label>
-          <input type="range" id="angular-resolution" value="180" min="24" max="360" step="6" />
-        </div>
-
-        <div class="control-group">
-          <label for="threshold">
-            Image Threshold
-            <span class="range-value" id="threshold-value">128</span>
-          </label>
-          <input type="range" id="threshold" value="128" min="0" max="255" step="1" />
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="process-btn" class="btn-primary" disabled>
-          🔄 Process Image
-        </button>
-        <button id="download-btn" class="btn-secondary hidden">
-          💾 Download STL
-        </button>
-      </div>
-
-      <p id="info-text" class="info-text">Upload an image to get started</p>
-
-      <footer>
-        <p>Made with ❤️ for 3D printing enthusiasts | <a href="https://github.com/seriouslysean/shadecaster" target="_blank">GitHub</a></p>
-        <p>All processing happens in your browser - your images never leave your device</p>
+      <footer class="footer">
+        <p>
+          Print with dark filament for maximum contrast. All processing happens in your browser.
+        </p>
+        <p>
+          <a href="https://github.com/seriouslysean/shadecaster" target="_blank" rel="noreferrer">
+            View on GitHub
+          </a>
+        </p>
       </footer>
-    </div>
+    </main>
 
     <script>
       import '../main';
