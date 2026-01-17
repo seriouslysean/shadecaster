@@ -1,30 +1,39 @@
 import { processImage, drawPreview } from './lib/imageProcessor';
-import type { RadialSample } from './lib/imageProcessor';
+import type { ProcessingParams, RadialSample } from './lib/imageProcessor';
 import { exportSTL, downloadSTL, type GeometryParams } from './lib/stlGenerator';
 
-// DOM elements
-const imageUpload = document.getElementById('image-upload') as HTMLInputElement;
-const previewSection = document.getElementById('preview-section') as HTMLDivElement;
-const previewCanvas = document.getElementById('preview-canvas') as HTMLCanvasElement;
-const processBtn = document.getElementById('process-btn') as HTMLButtonElement;
-const downloadBtn = document.getElementById('download-btn') as HTMLButtonElement;
-const infoText = document.getElementById('info-text') as HTMLParagraphElement;
+const LED_MOUNT_DIAMETER = 21;
+const LED_MOUNT_HEIGHT = 15;
 
-// Control elements
-const domeDiameterInput = document.getElementById('dome-diameter') as HTMLInputElement;
-const domeHeightInput = document.getElementById('dome-height') as HTMLInputElement;
-const finThicknessInput = document.getElementById('fin-thickness') as HTMLInputElement;
-const baseHeightInput = document.getElementById('base-height') as HTMLInputElement;
-const angularResolutionInput = document.getElementById(
-  'angular-resolution'
-) as HTMLInputElement;
-const thresholdInput = document.getElementById('threshold') as HTMLInputElement;
-const angularValue = document.getElementById('angular-value') as HTMLSpanElement;
-const thresholdValue = document.getElementById('threshold-value') as HTMLSpanElement;
+const getElement = <T extends HTMLElement>(id: string): T => {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing element: ${id}`);
+  }
+  return element as T;
+};
 
-let currentImage: HTMLImageElement | null = null;
-let currentSamples: RadialSample[] = [];
-let currentCropSize = 0;
+const imageUpload = getElement<HTMLInputElement>('image-upload');
+const previewSection = getElement<HTMLDivElement>('preview-section');
+const previewCanvas = getElement<HTMLCanvasElement>('preview-canvas');
+const processBtn = getElement<HTMLButtonElement>('process-btn');
+const downloadBtn = getElement<HTMLButtonElement>('download-btn');
+const infoText = getElement<HTMLParagraphElement>('info-text');
+
+const domeDiameterInput = getElement<HTMLInputElement>('dome-diameter');
+const domeHeightInput = getElement<HTMLInputElement>('dome-height');
+const finThicknessInput = getElement<HTMLInputElement>('fin-thickness');
+const baseHeightInput = getElement<HTMLInputElement>('base-height');
+const angularResolutionInput = getElement<HTMLInputElement>('angular-resolution');
+const thresholdInput = getElement<HTMLInputElement>('threshold');
+const angularValue = getElement<HTMLSpanElement>('angular-value');
+const thresholdValue = getElement<HTMLSpanElement>('threshold-value');
+
+const state = {
+  image: null as HTMLImageElement | null,
+  samples: [] as RadialSample[],
+  cropSize: 0,
+};
 
 const cropImageToSquare = (image: HTMLImageElement): HTMLCanvasElement => {
   const size = Math.min(image.width, image.height);
@@ -41,110 +50,161 @@ const cropImageToSquare = (image: HTMLImageElement): HTMLCanvasElement => {
   return canvas;
 };
 
-// Update range displays
-angularResolutionInput.addEventListener('input', () => {
-  angularValue.textContent = `${angularResolutionInput.value} fins`;
-});
+const loadImageFromSource = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not read the image file.'));
+    image.src = src;
+  });
 
-thresholdInput.addEventListener('input', () => {
-  thresholdValue.textContent = thresholdInput.value;
-});
-
-// Handle image upload
-imageUpload.addEventListener('change', async (e) => {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-
-  currentImage = null;
-  currentSamples = [];
-  previewSection.classList.add('hidden');
-  downloadBtn.classList.add('hidden');
-  processBtn.disabled = true;
-
-  const img = new Image();
+const loadImageFromFile = async (file: File): Promise<HTMLImageElement> => {
   const objectUrl = URL.createObjectURL(file);
-  img.onload = () => {
+  try {
+    return await loadImageFromSource(objectUrl);
+  } finally {
     URL.revokeObjectURL(objectUrl);
-    try {
-      const squareCanvas = cropImageToSquare(img);
-      currentCropSize = squareCanvas.width;
-      const squareImage = new Image();
-      squareImage.onload = () => {
-        currentImage = squareImage;
-        processBtn.disabled = false;
-        downloadBtn.classList.add('hidden');
-        infoText.textContent = `Image loaded and cropped to ${currentCropSize}×${currentCropSize}.`;
-      };
-      squareImage.src = squareCanvas.toDataURL('image/png');
-    } catch (error) {
-      console.error('Error preparing image:', error);
-      infoText.textContent = 'Could not crop image. Please try another file.';
-    }
-  };
+  }
+};
 
-  img.onerror = () => {
-    URL.revokeObjectURL(objectUrl);
-    infoText.textContent = 'Could not read the image file. Please try another file.';
-  };
+const loadImageFromCanvas = (canvas: HTMLCanvasElement): Promise<HTMLImageElement> =>
+  loadImageFromSource(canvas.toDataURL('image/png'));
 
-  img.src = objectUrl;
+const setInfo = (message: string): void => {
+  infoText.textContent = message;
+};
+
+const setPreviewVisible = (visible: boolean): void => {
+  previewSection.classList.toggle('hidden', !visible);
+};
+
+const setDownloadVisible = (visible: boolean): void => {
+  downloadBtn.classList.toggle('hidden', !visible);
+};
+
+const setProcessEnabled = (enabled: boolean): void => {
+  processBtn.disabled = !enabled;
+};
+
+const clampNumber = (value: number, min: number, max: number, fallback: number): number => {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, value));
+};
+
+const readNumberInput = (
+  input: HTMLInputElement,
+  min: number,
+  max: number,
+  fallback: number
+): number => {
+  const value = clampNumber(input.valueAsNumber, min, max, fallback);
+  input.value = String(value);
+  return value;
+};
+
+const updateRangeLabels = (): void => {
+  angularValue.textContent = `${angularResolutionInput.value} fins`;
+  thresholdValue.textContent = thresholdInput.value;
+};
+
+const resetImageState = (): void => {
+  state.image = null;
+  state.samples = [];
+  state.cropSize = 0;
+  setPreviewVisible(false);
+  setDownloadVisible(false);
+  setProcessEnabled(false);
+};
+
+const getProcessingParams = (): ProcessingParams => {
+  const angularResolution = readNumberInput(angularResolutionInput, 24, 360, 180);
+  const threshold = readNumberInput(thresholdInput, 0, 255, 128);
+  updateRangeLabels();
+  return { angularResolution, threshold };
+};
+
+const getGeometryParams = (): GeometryParams => ({
+  domeDiameter: readNumberInput(domeDiameterInput, 50, 200, 60),
+  domeHeight: readNumberInput(domeHeightInput, 20, 150, 40),
+  finThickness: readNumberInput(finThicknessInput, 0.5, 5, 1.2),
+  baseHeight: readNumberInput(baseHeightInput, 5, 30, 8),
+  ledMountDiameter: LED_MOUNT_DIAMETER,
+  ledMountHeight: LED_MOUNT_HEIGHT,
+});
+
+angularResolutionInput.addEventListener('input', updateRangeLabels);
+thresholdInput.addEventListener('input', updateRangeLabels);
+updateRangeLabels();
+
+imageUpload.addEventListener('change', async (event) => {
+  const file = (event.currentTarget as HTMLInputElement).files?.[0];
+  if (!file) {
+    return;
+  }
+
+  resetImageState();
+  setInfo('Loading image...');
+
+  try {
+    const image = await loadImageFromFile(file);
+    const squareCanvas = cropImageToSquare(image);
+    state.cropSize = squareCanvas.width;
+    state.image = await loadImageFromCanvas(squareCanvas);
+    setProcessEnabled(true);
+    setDownloadVisible(false);
+    setInfo(`Image loaded and cropped to ${state.cropSize}×${state.cropSize}.`);
+  } catch (error) {
+    console.error('Error preparing image:', error);
+    setInfo('Could not read or crop the image. Please try another file.');
+  }
 });
 
 // Process image
-processBtn.addEventListener('click', async () => {
-  if (!currentImage) return;
+processBtn.addEventListener('click', () => {
+  if (!state.image) {
+    return;
+  }
 
-  processBtn.disabled = true;
-  infoText.textContent = 'Processing image...';
+  setProcessEnabled(false);
+  setInfo('Processing image...');
 
   try {
-    const params = {
-      angularResolution: parseInt(angularResolutionInput.value),
-      threshold: parseInt(thresholdInput.value),
-    };
-
-    currentSamples = await processImage(currentImage, params);
-
-    drawPreview(previewCanvas, currentImage, currentSamples);
-    previewSection.classList.remove('hidden');
-
-    downloadBtn.classList.remove('hidden');
-    infoText.textContent =
-      'Preview ready. Adjust parameters if needed, then download the STL.';
+    const params = getProcessingParams();
+    state.samples = processImage(state.image, params);
+    drawPreview(previewCanvas, state.image, state.samples);
+    setPreviewVisible(true);
+    setDownloadVisible(true);
+    setInfo('Preview ready. Adjust parameters if needed, then download the STL.');
   } catch (error) {
     console.error('Error processing image:', error);
-    infoText.textContent = 'Error processing image. Please try again.';
+    const message =
+      error instanceof Error ? error.message : 'Error processing image. Please try again.';
+    setInfo(message);
   } finally {
-    processBtn.disabled = false;
+    setProcessEnabled(true);
   }
 });
 
 // Download STL
 downloadBtn.addEventListener('click', () => {
-  if (currentSamples.length === 0) return;
+  if (state.samples.length === 0) {
+    return;
+  }
 
-  const params: GeometryParams = {
-    domeDiameter: parseFloat(domeDiameterInput.value),
-    domeHeight: parseFloat(domeHeightInput.value),
-    finThickness: parseFloat(finThicknessInput.value),
-    baseHeight: parseFloat(baseHeightInput.value),
-    ledMountDiameter: 21, // Standard tea light diameter
-    ledMountHeight: 15, // Standard tea light height
-  };
-
-  const blob = exportSTL(currentSamples, params);
+  const params = getGeometryParams();
+  const blob = exportSTL(state.samples, params);
   downloadSTL(blob, 'shadow-lamp.stl');
-
-  infoText.textContent = 'STL downloaded. Ready to 3D print.';
+  setInfo('STL downloaded. Ready to 3D print.');
 });
 
 // Allow reprocessing when parameters change
 [thresholdInput, angularResolutionInput].forEach((input) => {
   input.addEventListener('change', () => {
-    if (currentImage) {
-      downloadBtn.classList.add('hidden');
-      infoText.textContent =
-        'Parameters changed - click "Process Image" to update preview';
+    if (state.image) {
+      setDownloadVisible(false);
+      setInfo('Parameters changed. Click "Process image" to update the preview.');
     }
   });
 });

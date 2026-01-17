@@ -217,9 +217,9 @@ async function processImage(imageData: ImageData): Promise<ProcessedData> {
 For complete details, see:
 
 - [../.agents](../.agents) - Core validation workflow and architecture
-- [../CLAUDE.md](../CLAUDE.md) - Claude-specific workflows (if using Claude)
-- [../README.md](../README.md) - Project overview
-- [../TESTING.md](../TESTING.md) - Testing guide
+- [../docs/CLAUDE.md](../docs/CLAUDE.md) - Claude-specific workflows (if using Claude)
+- [../docs/README.md](../docs/README.md) - Project overview
+- [../docs/TESTING.md](../docs/TESTING.md) - Testing guide
 
 ## Quick Reference
 

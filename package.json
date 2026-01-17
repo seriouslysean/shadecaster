@@ -23,7 +23,7 @@
     "3d-printing",
     "shadow-lamp"
   ],
-  "author": "",
+  "author": "Sean Kennedy",
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.53.0",

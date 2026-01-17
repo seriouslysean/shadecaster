@@ -1,7 +1,3 @@
-/**
- * Process an image to extract radial samples for shadow lamp generation
- */
-
 export interface RadialSample {
   angle: number;
   distance: number;
@@ -12,45 +8,32 @@ export interface ProcessingParams {
   threshold: number;
 }
 
-/**
- * Convert image to binary using threshold
- * Handles transparency: fully transparent pixels are treated as light/gaps
- */
-async function imageToBinary(
-  imageData: ImageData,
-  threshold: number
-): Promise<boolean[][]> {
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
+const toBinary = (imageData: ImageData, threshold: number): boolean[][] => {
   const { width, height, data } = imageData;
-  const binary: boolean[][] = [];
+  const binary: boolean[][] = Array.from({ length: height }, () => new Array<boolean>(width));
 
   for (let y = 0; y < height; y++) {
-    const row: boolean[] = [];
-    binary[y] = row;
+    const row = binary[y];
+    if (!row) {
+      continue;
+    }
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       const r = data[i] ?? 0;
       const g = data[i + 1] ?? 0;
       const b = data[i + 2] ?? 0;
       const alpha = data[i + 3] ?? 255;
-
-      // Treat transparent pixels as light/gaps (not dark)
-      if (alpha < 128) {
-        row[x] = false;
-      } else {
-        // Convert to grayscale using luminance formula
-        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-        row[x] = gray < threshold;
-      }
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      row[x] = alpha >= 128 && gray < threshold;
     }
   }
 
   return binary;
-}
+};
 
-/**
- * Perform radial sampling from center of binary image
- * For each angle, cast a ray and find the outermost dark pixel
- */
 function radialSample(
   binary: boolean[][],
   angularResolution: number
@@ -71,14 +54,12 @@ function radialSample(
 
     let maxDistance = 0;
 
-    // Cast ray from center outward
     for (let r = 0; r < maxRadius; r++) {
       const x = Math.round(centerX + dx * r);
       const y = Math.round(centerY + dy * r);
 
       if (x >= 0 && x < width && y >= 0 && y < height) {
         if (binary[y]?.[x]) {
-          // Dark pixel found
           maxDistance = r;
         }
       }
@@ -93,27 +74,37 @@ function radialSample(
   return samples;
 }
 
-/**
- * Process image and extract radial samples
- */
-export async function processImage(
+export function processImage(
   image: HTMLImageElement,
   params: ProcessingParams
-): Promise<RadialSample[]> {
-  // Create canvas to extract image data
+): RadialSample[] {
+  if (!Number.isFinite(params.angularResolution) || !Number.isFinite(params.threshold)) {
+    throw new Error('Processing parameters must be valid numbers.');
+  }
+
+  const angularResolution = Math.round(params.angularResolution);
+  if (angularResolution < 3) {
+    throw new Error('Angular resolution must be at least 3.');
+  }
+
+  const threshold = clamp(params.threshold, 0, 255);
+
   const canvas = document.createElement('canvas');
   canvas.width = image.width;
   canvas.height = image.height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Failed to get canvas context');
+  if (!ctx) {
+    throw new Error('Failed to get canvas context.');
+  }
 
   ctx.drawImage(image, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  // Convert to binary
-  const binary = await imageToBinary(imageData, params.threshold);
+  if (imageData.width === 0 || imageData.height === 0) {
+    throw new Error('Image has no data.');
+  }
 
-  // Check for edge cases: all-white or all-black images
+  const binary = toBinary(imageData, threshold);
   const hasAnyDarkPixels = binary.some((row) => row.some((pixel) => pixel));
   const hasAnyLightPixels = binary.some((row) => row.some((pixel) => !pixel));
 
@@ -129,13 +120,9 @@ export async function processImage(
     );
   }
 
-  // Perform radial sampling
-  return radialSample(binary, params.angularResolution);
+  return radialSample(binary, angularResolution);
 }
 
-/**
- * Draw preview of the processed image
- */
 export function drawPreview(
   canvas: HTMLCanvasElement,
   image: HTMLImageElement,
