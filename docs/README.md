@@ -16,8 +16,8 @@ Transform silhouette images into 3D-printable shadow lamps that cast beautiful s
 1. **Upload** - Provide a silhouette image (black silhouette on white/transparent background works best)
    - Supported formats: PNG (with transparency support), JPEG, WebP
    - Note: SVG support is not currently implemented
-2. **Process** - Image is converted to binary using threshold, then sampled in polar coordinates from the image center so the center becomes the LED position
-3. **Generate** - The polar samples fold upward into the lamp: radius from the center maps to fin height, and each dark pixel becomes a fin segment that blocks light
+2. **Process** - Image is converted to binary using threshold, then sampled in polar coordinates from the image center
+3. **Generate** - The polar samples wrap upward from the bottom: image center maps to the bottom base, image edge maps to the top opening where the light mounts. The light (LED/tea light) mounts at the top opening facing downward into the dome, shining down and outward through the fins. Dark pixels become fin segments that block this light to project the shadow onto the surface below
 4. **Export** - Download the binary STL file for 3D printing
 
 ## Technical Details
@@ -73,7 +73,7 @@ For detailed testing documentation, see [TESTING.md](./TESTING.md).
 - **Base Height**: Height of the base ring (default: 8mm, range: 5-30mm)
 - **Angular Resolution**: Number of fins/samples (default: 180, range: 24-360, higher = smoother but larger file)
 - **Image Threshold**: Grayscale threshold for binary conversion (default: 128, range: 0-255, adjust if image is too bright/dark)
-- **LED Mount Diameter**: Center hole for tea light (fixed: 21mm standard tea light)
+- **LED Mount Diameter**: Top opening diameter for tea light mount (fixed: 21mm standard tea light)
 
 ## 3D Printing Tips
 
