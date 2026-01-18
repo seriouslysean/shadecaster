@@ -16,8 +16,8 @@ Transform silhouette images into 3D-printable shadow lamps that cast beautiful s
 1. **Upload** - Provide a silhouette image (black silhouette on white/transparent background works best)
    - Supported formats: PNG (with transparency support), JPEG, WebP
    - Note: SVG support is not currently implemented
-2. **Process** - Image is converted to binary using threshold, then radially sampled from the center to detect the silhouette outline
-3. **Generate** - A dome structure with radial fins is created, where fin height corresponds to the sample distance at each angle
+2. **Process** - Image is converted to binary using threshold, then sampled in polar coordinates from the image center so the center becomes the LED position
+3. **Generate** - The polar samples fold upward into the lamp: radius from the center maps to fin height, and each dark pixel becomes a fin segment that blocks light
 4. **Export** - Download the binary STL file for 3D printing
 
 ## Technical Details
