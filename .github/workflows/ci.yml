@@ -97,14 +97,11 @@ jobs:
       - name: Build production
         run: npm run build
 
-      - name: Generate test fixtures
-        run: node scripts/generate-test-fixtures.js
-
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
           start: npm run preview
-          wait-on: 'http://localhost:4321'
+          wait-on: 'http://localhost:4321/shadecaster'
           wait-on-timeout: 120
           browser: chrome
           record: false

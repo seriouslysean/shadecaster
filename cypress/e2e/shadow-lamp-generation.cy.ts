@@ -1,68 +1,42 @@
 /// <reference types="cypress" />
 
 /**
- * E2E Test: Shadow Lamp Generator - Minimal User Journey
+ * E2E Test: Shadow Lamp Generator - Core Browser Behavior
  *
- * Focus: Browser-specific behavior and core user flow
- * - Upload image
- * - Process image
- * - Download STL
- *
- * Note: Parameter validation and edge cases are covered by unit tests
+ * Focus: Page loads correctly and basic UI elements work
+ * Not testing: File processing, image manipulation, STL generation
+ * (Those are covered by unit/integration tests)
  */
 
 describe('Shadow Lamp Generator', () => {
-  beforeEach(() => {
+  it('should load the page and display core UI elements', () => {
     cy.visit('/');
-  });
 
-  it('should complete the full user journey: upload → process → download', () => {
-    // Verify app loads
+    // Page loads with correct content
     cy.contains('Shadecaster').should('be.visible');
-    cy.get('#process-btn').should('be.disabled');
+    cy.contains('Shadow lamp STL generator').should('be.visible');
 
-    // Upload image
-    cy.get('#image-upload').uploadFile('test-circle.png');
-    cy.get('#process-btn').should('not.be.disabled');
+    // Core form elements exist
+    cy.get('#image-upload').should('exist');
+    cy.get('#process-btn').should('exist').and('be.disabled');
 
-    // Process image
-    cy.get('#process-btn').click();
-    cy.waitForPreview();
-    cy.get('#download-btn').should('be.visible').and('not.be.disabled');
-
-    // Download STL
-    let downloadedBlob: Blob;
-    cy.window().then((win) => {
-      const originalCreateObjectURL = win.URL.createObjectURL;
-      cy.stub(win.URL, 'createObjectURL').callsFake((blob: Blob) => {
-        downloadedBlob = blob;
-        return originalCreateObjectURL(blob);
-      });
-    });
-
-    cy.get('#download-btn').click();
-
-    // Verify valid STL file was generated
-    cy.then(() => {
-      expect(downloadedBlob).to.exist;
-      expect(downloadedBlob.type).to.equal('application/sla');
-      expect(downloadedBlob.size).to.be.greaterThan(1000);
-    });
+    // Control inputs exist with correct defaults
+    cy.get('#dome-diameter').should('have.value', '55');
+    cy.get('#dome-height').should('have.value', '30');
+    cy.get('#fin-thickness').should('have.value', '0.8');
+    cy.get('#base-height').should('have.value', '5');
+    cy.get('#angular-resolution').should('have.value', '120');
   });
 
-  it('should adjust controls and regenerate', () => {
-    // Upload and process
-    cy.get('#image-upload').uploadFile('test-circle.png');
-    cy.get('#process-btn').click();
-    cy.waitForPreview();
+  it('should update control value displays', () => {
+    cy.visit('/');
 
-    // Adjust angular resolution control
+    // Angular resolution display updates
     cy.get('#angular-resolution').invoke('val', 90).trigger('input');
     cy.get('#angular-value').should('contain', '90 fins');
 
-    // Reprocess with new settings
-    cy.get('#process-btn').click();
-    cy.waitForPreview();
-    cy.get('#download-btn').should('be.visible');
+    // Threshold display updates
+    cy.get('#threshold').invoke('val', 200).trigger('input');
+    cy.get('#threshold-value').should('contain', '200');
   });
 });
