@@ -1,4 +1,4 @@
-import type { RadialSample } from './imageProcessor';
+import type { FinSegment, RadialSample } from './imageProcessor';
 
 export interface GeometryParams {
   domeDiameter: number;
@@ -21,6 +21,17 @@ interface Triangle {
 
 const addTriangle = (triangles: Triangle[], v1: Vector3, v2: Vector3, v3: Vector3): void => {
   triangles.push({ vertices: [v1, v2, v3] });
+};
+
+const addQuad = (
+  triangles: Triangle[],
+  v1: Vector3,
+  v2: Vector3,
+  v3: Vector3,
+  v4: Vector3
+): void => {
+  addTriangle(triangles, v1, v2, v3);
+  addTriangle(triangles, v1, v3, v4);
 };
 
 const validateGeometryParams = (params: GeometryParams): void => {
@@ -47,24 +58,89 @@ const validateGeometryParams = (params: GeometryParams): void => {
 
 const createFinVertices = (
   angle: number,
+  innerRadius: number,
+  outerRadius: number,
+  finThickness: number,
   baseHeight: number,
-  topHeight: number,
-  radius: number,
-  finThickness: number
-): { baseLeft: Vector3; baseRight: Vector3; topLeft: Vector3; topRight: Vector3 } => {
-  const x = Math.cos(angle) * radius;
-  const y = Math.sin(angle) * radius;
+  topHeight: number
+): {
+  innerLeftBase: Vector3;
+  innerRightBase: Vector3;
+  outerLeftBase: Vector3;
+  outerRightBase: Vector3;
+  innerLeftTop: Vector3;
+  innerRightTop: Vector3;
+  outerLeftTop: Vector3;
+  outerRightTop: Vector3;
+} => {
+  const dirX = Math.cos(angle);
+  const dirY = Math.sin(angle);
   const perpX = -Math.sin(angle);
   const perpY = Math.cos(angle);
   const halfThickness = finThickness / 2;
 
-  const baseLeft = { x: x + perpX * halfThickness, y: y + perpY * halfThickness, z: baseHeight };
-  const baseRight = { x: x - perpX * halfThickness, y: y - perpY * halfThickness, z: baseHeight };
-  const topLeft = { x: x + perpX * halfThickness, y: y + perpY * halfThickness, z: topHeight };
-  const topRight = { x: x - perpX * halfThickness, y: y - perpY * halfThickness, z: topHeight };
+  const innerX = dirX * innerRadius;
+  const innerY = dirY * innerRadius;
+  const outerX = dirX * outerRadius;
+  const outerY = dirY * outerRadius;
 
-  return { baseLeft, baseRight, topLeft, topRight };
+  const innerLeftBase = {
+    x: innerX + perpX * halfThickness,
+    y: innerY + perpY * halfThickness,
+    z: baseHeight,
+  };
+  const innerRightBase = {
+    x: innerX - perpX * halfThickness,
+    y: innerY - perpY * halfThickness,
+    z: baseHeight,
+  };
+  const outerLeftBase = {
+    x: outerX + perpX * halfThickness,
+    y: outerY + perpY * halfThickness,
+    z: baseHeight,
+  };
+  const outerRightBase = {
+    x: outerX - perpX * halfThickness,
+    y: outerY - perpY * halfThickness,
+    z: baseHeight,
+  };
+  const innerLeftTop = {
+    x: innerX + perpX * halfThickness,
+    y: innerY + perpY * halfThickness,
+    z: topHeight,
+  };
+  const innerRightTop = {
+    x: innerX - perpX * halfThickness,
+    y: innerY - perpY * halfThickness,
+    z: topHeight,
+  };
+  const outerLeftTop = {
+    x: outerX + perpX * halfThickness,
+    y: outerY + perpY * halfThickness,
+    z: topHeight,
+  };
+  const outerRightTop = {
+    x: outerX - perpX * halfThickness,
+    y: outerY - perpY * halfThickness,
+    z: topHeight,
+  };
+
+  return {
+    innerLeftBase,
+    innerRightBase,
+    outerLeftBase,
+    outerRightBase,
+    innerLeftTop,
+    innerRightTop,
+    outerLeftTop,
+    outerRightTop,
+  };
 };
+
+const clampSegment = (segment: FinSegment): FinSegment => ({
+  start: Math.min(Math.max(segment.start, 0), 1),
+  end: Math.min(Math.max(segment.end, 0), 1),
+});
 
 function generateGeometry(
   samples: RadialSample[],
@@ -155,68 +231,74 @@ function generateGeometry(
     if (!sample) continue;
 
     const angle = sample.angle;
-    const finHeight = params.baseHeight + sample.distance * params.domeHeight;
-    const vertices = createFinVertices(
-      angle,
-      params.baseHeight,
-      finHeight,
-      radius,
-      params.finThickness
-    );
+    const segments = sample.segments;
+    if (segments.length === 0) {
+      continue;
+    }
 
-    addTriangle(triangles, vertices.baseLeft, vertices.topLeft, vertices.baseRight);
-    addTriangle(triangles, vertices.baseRight, vertices.topLeft, vertices.topRight);
+    segments.forEach((segment) => {
+      const clamped = clampSegment(segment);
+      if (clamped.end <= clamped.start) {
+        return;
+      }
+      const bottomHeight = params.baseHeight + clamped.start * params.domeHeight;
+      const topHeight = params.baseHeight + clamped.end * params.domeHeight;
+      if (topHeight <= bottomHeight) {
+        return;
+      }
 
-    const nextSample = samples[(i + 1) % samples.length];
-    if (!nextSample) continue;
+      const vertices = createFinVertices(
+        angle,
+        ledMountRadius,
+        radius,
+        params.finThickness,
+        bottomHeight,
+        topHeight
+      );
 
-    const nextAngle = nextSample.angle;
-    const nextFinHeight = params.baseHeight + nextSample.distance * params.domeHeight;
-    const nextVertices = createFinVertices(
-      nextAngle,
-      params.baseHeight,
-      nextFinHeight,
-      radius,
-      params.finThickness
-    );
-
-    addTriangle(triangles, vertices.topLeft, nextVertices.topLeft, vertices.topRight);
-    addTriangle(triangles, vertices.topRight, nextVertices.topLeft, nextVertices.topRight);
-  }
-
-  const avgDistance = samples.reduce((sum, sample) => sum + sample.distance, 0) / samples.length;
-  const avgHeight = params.baseHeight + avgDistance * params.domeHeight;
-  const center: Vector3 = { x: 0, y: 0, z: avgHeight };
-
-  for (let i = 0; i < samples.length; i++) {
-    const sample = samples[i];
-    if (!sample) continue;
-
-    const angle = sample.angle;
-    const finHeight = params.baseHeight + sample.distance * params.domeHeight;
-    const vertices = createFinVertices(
-      angle,
-      params.baseHeight,
-      finHeight,
-      radius,
-      params.finThickness
-    );
-
-    const nextSample = samples[(i + 1) % samples.length];
-    if (!nextSample) continue;
-
-    const nextAngle = nextSample.angle;
-    const nextFinHeight = params.baseHeight + nextSample.distance * params.domeHeight;
-    const nextVertices = createFinVertices(
-      nextAngle,
-      params.baseHeight,
-      nextFinHeight,
-      radius,
-      params.finThickness
-    );
-
-    addTriangle(triangles, center, vertices.topLeft, nextVertices.topLeft);
-    addTriangle(triangles, center, nextVertices.topRight, vertices.topRight);
+      addQuad(
+        triangles,
+        vertices.outerLeftBase,
+        vertices.outerRightBase,
+        vertices.outerRightTop,
+        vertices.outerLeftTop
+      );
+      addQuad(
+        triangles,
+        vertices.innerRightBase,
+        vertices.innerLeftBase,
+        vertices.innerLeftTop,
+        vertices.innerRightTop
+      );
+      addQuad(
+        triangles,
+        vertices.innerLeftBase,
+        vertices.outerLeftBase,
+        vertices.outerLeftTop,
+        vertices.innerLeftTop
+      );
+      addQuad(
+        triangles,
+        vertices.outerRightBase,
+        vertices.innerRightBase,
+        vertices.innerRightTop,
+        vertices.outerRightTop
+      );
+      addQuad(
+        triangles,
+        vertices.innerLeftTop,
+        vertices.outerLeftTop,
+        vertices.outerRightTop,
+        vertices.innerRightTop
+      );
+      addQuad(
+        triangles,
+        vertices.innerRightBase,
+        vertices.outerRightBase,
+        vertices.outerLeftBase,
+        vertices.innerLeftBase
+      );
+    });
   }
 
   return triangles;

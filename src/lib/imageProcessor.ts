@@ -1,6 +1,11 @@
+export interface FinSegment {
+  start: number;
+  end: number;
+}
+
 export interface RadialSample {
   angle: number;
-  distance: number;
+  segments: FinSegment[];
 }
 
 export interface ProcessingParams {
@@ -40,34 +45,61 @@ function radialSample(
 ): RadialSample[] {
   const height = binary.length;
   const width = binary[0]?.length ?? 0;
-  const centerX = width / 2;
-  const centerY = height / 2;
+  const centerX = (width - 1) / 2;
+  const centerY = (height - 1) / 2;
   const maxRadius = Math.min(centerX, centerY);
+  if (maxRadius <= 0) {
+    throw new Error('Image is too small to sample.');
+  }
+  const radialSteps = Math.max(1, Math.floor(maxRadius));
 
   const samples: RadialSample[] = [];
   const angleStep = (2 * Math.PI) / angularResolution;
+  const radiusToHeight = (radius: number): number =>
+    clamp(1 - radius / maxRadius, 0, 1);
 
   for (let i = 0; i < angularResolution; i++) {
     const angle = i * angleStep;
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
 
-    let maxDistance = 0;
+    const segments: FinSegment[] = [];
+    let segmentStart: number | null = null;
 
-    for (let r = 0; r < maxRadius; r++) {
+    const pushSegment = (startRadius: number, endRadius: number): void => {
+      const top = radiusToHeight(startRadius);
+      const bottom = radiusToHeight(Math.min(endRadius + 1, maxRadius));
+      const start = Math.min(bottom, top);
+      const end = Math.max(bottom, top);
+      if (end > start) {
+        segments.push({ start, end });
+      }
+    };
+
+    for (let r = 0; r < radialSteps; r++) {
       const x = Math.round(centerX + dx * r);
       const y = Math.round(centerY + dy * r);
 
       if (x >= 0 && x < width && y >= 0 && y < height) {
-        if (binary[y]?.[x]) {
-          maxDistance = r;
+        const isDark = binary[y]?.[x] ?? false;
+        if (isDark) {
+          if (segmentStart === null) {
+            segmentStart = r;
+          }
+        } else if (segmentStart !== null) {
+          pushSegment(segmentStart, r - 1);
+          segmentStart = null;
         }
       }
     }
 
+    if (segmentStart !== null) {
+      pushSegment(segmentStart, radialSteps - 1);
+    }
+
     samples.push({
       angle,
-      distance: maxDistance / maxRadius, // Normalize to 0-1
+      segments,
     });
   }
 
@@ -140,23 +172,32 @@ export function drawPreview(
   // Draw radial samples overlay
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1.5;
-  ctx.beginPath();
-
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
+  const centerX = (canvas.width - 1) / 2;
+  const centerY = (canvas.height - 1) / 2;
   const maxRadius = Math.min(centerX, centerY);
 
-  samples.forEach((sample, i) => {
-    const x = centerX + Math.cos(sample.angle) * sample.distance * maxRadius;
-    const y = centerY + Math.sin(sample.angle) * sample.distance * maxRadius;
+  if (maxRadius <= 0) {
+    return;
+  }
 
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
+  const heightToRadius = (height: number): number => (1 - height) * maxRadius;
+
+  samples.forEach((sample) => {
+    const dx = Math.cos(sample.angle);
+    const dy = Math.sin(sample.angle);
+
+    sample.segments.forEach((segment) => {
+      const startRadius = heightToRadius(segment.start);
+      const endRadius = heightToRadius(segment.end);
+      const startX = centerX + dx * startRadius;
+      const startY = centerY + dy * startRadius;
+      const endX = centerX + dx * endRadius;
+      const endY = centerY + dy * endRadius;
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    });
   });
-
-  ctx.closePath();
-  ctx.stroke();
 }
