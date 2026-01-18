@@ -1,9 +1,10 @@
-import { processImage, drawPreview } from './lib/imageProcessor';
-import type { ProcessingParams, RadialSample } from './lib/imageProcessor';
-import { exportSTL, downloadSTL, type GeometryParams } from './lib/stlGenerator';
+import { processImage } from './lib/image-processor';
+import type { ProcessingParams, CutoutMask } from './lib/image-processor';
+import { exportSTL, downloadSTL, type GeometryParams, type StlFormat } from './lib/stl-generator';
+import { clamp } from './lib/utils';
 
-const LED_MOUNT_DIAMETER = 21;
-const LED_MOUNT_HEIGHT = 15;
+const TEA_LIGHT_DIAMETER = 38;
+const TEA_LIGHT_HEIGHT = 16;
 
 const getElement = <T extends HTMLElement>(id: string): T => {
   const element = document.getElementById(id);
@@ -14,26 +15,28 @@ const getElement = <T extends HTMLElement>(id: string): T => {
 };
 
 const imageUpload = getElement<HTMLInputElement>('image-upload');
-const previewSection = getElement<HTMLDivElement>('preview-section');
-const previewCanvas = getElement<HTMLCanvasElement>('preview-canvas');
-const processBtn = getElement<HTMLButtonElement>('process-btn');
 const downloadBtn = getElement<HTMLButtonElement>('download-btn');
 const infoText = getElement<HTMLParagraphElement>('info-text');
 
 const domeDiameterInput = getElement<HTMLInputElement>('dome-diameter');
 const domeHeightInput = getElement<HTMLInputElement>('dome-height');
-const finThicknessInput = getElement<HTMLInputElement>('fin-thickness');
-const baseHeightInput = getElement<HTMLInputElement>('base-height');
+const teaLightDiameterInput = getElement<HTMLInputElement>('tea-light-diameter');
+const teaLightDepthInput = getElement<HTMLInputElement>('tea-light-depth');
+const wallThicknessInput = getElement<HTMLInputElement>('wall-thickness');
+const wallHeightInput = getElement<HTMLInputElement>('wall-height');
 const angularResolutionInput = getElement<HTMLInputElement>('angular-resolution');
 const thresholdInput = getElement<HTMLInputElement>('threshold');
+const stlFormatInput = getElement<HTMLSelectElement>('stl-format');
 const angularValue = getElement<HTMLSpanElement>('angular-value');
 const thresholdValue = getElement<HTMLSpanElement>('threshold-value');
 
 const state = {
   image: null as HTMLImageElement | null,
-  samples: [] as RadialSample[],
+  mask: null as CutoutMask | null,
   cropSize: 0,
+  fileName: null as string | null,
 };
+let processingTimeout: number | null = null;
 
 const cropImageToSquare = (image: HTMLImageElement): HTMLCanvasElement => {
   const size = Math.min(image.width, image.height);
@@ -74,24 +77,12 @@ const setInfo = (message: string): void => {
   infoText.textContent = message;
 };
 
-const setPreviewVisible = (visible: boolean): void => {
-  previewSection.classList.toggle('hidden', !visible);
-};
-
 const setDownloadVisible = (visible: boolean): void => {
   downloadBtn.classList.toggle('hidden', !visible);
 };
 
-const setProcessEnabled = (enabled: boolean): void => {
-  processBtn.disabled = !enabled;
-};
-
-const clampNumber = (value: number, min: number, max: number, fallback: number): number => {
-  if (!Number.isFinite(value)) {
-    return fallback;
-  }
-  return Math.min(max, Math.max(min, value));
-};
+const clampOrFallback = (value: number, min: number, max: number, fallback: number): number =>
+  Number.isFinite(value) ? clamp(value, min, max) : fallback;
 
 const readNumberInput = (
   input: HTMLInputElement,
@@ -99,27 +90,43 @@ const readNumberInput = (
   max: number,
   fallback: number
 ): number => {
-  const value = clampNumber(input.valueAsNumber, min, max, fallback);
+  const value = clampOrFallback(input.valueAsNumber, min, max, fallback);
   input.value = String(value);
   return value;
 };
 
 const updateRangeLabels = (): void => {
-  angularValue.textContent = `${angularResolutionInput.value} fins`;
+  angularValue.textContent = `${angularResolutionInput.value} angles`;
   thresholdValue.textContent = thresholdInput.value;
 };
 
 const resetImageState = (): void => {
   state.image = null;
-  state.samples = [];
+  state.mask = null;
   state.cropSize = 0;
-  setPreviewVisible(false);
+  state.fileName = null;
   setDownloadVisible(false);
-  setProcessEnabled(false);
+  if (processingTimeout !== null) {
+    window.clearTimeout(processingTimeout);
+    processingTimeout = null;
+  }
+};
+
+const toStlFilename = (filename: string): string => {
+  const trimmed = filename.trim();
+  if (!trimmed) {
+    return 'shadow-lamp.stl';
+  }
+  const lastDot = trimmed.lastIndexOf('.');
+  const baseName = lastDot > 0 ? trimmed.slice(0, lastDot) : trimmed;
+  if (!baseName) {
+    return 'shadow-lamp.stl';
+  }
+  return `${baseName}.stl`;
 };
 
 const getProcessingParams = (): ProcessingParams => {
-  const angularResolution = readNumberInput(angularResolutionInput, 24, 360, 180);
+  const angularResolution = readNumberInput(angularResolutionInput, 12, 180, 18);
   const threshold = readNumberInput(thresholdInput, 0, 255, 128);
   updateRangeLabels();
   return { angularResolution, threshold };
@@ -127,15 +134,67 @@ const getProcessingParams = (): ProcessingParams => {
 
 const getGeometryParams = (): GeometryParams => ({
   domeDiameter: readNumberInput(domeDiameterInput, 50, 200, 60),
-  domeHeight: readNumberInput(domeHeightInput, 20, 150, 40),
-  finThickness: readNumberInput(finThicknessInput, 0.5, 5, 1.2),
-  baseHeight: readNumberInput(baseHeightInput, 5, 30, 8),
-  ledMountDiameter: LED_MOUNT_DIAMETER,
-  ledMountHeight: LED_MOUNT_HEIGHT,
+  domeHeight: readNumberInput(domeHeightInput, 20, 150, 20),
+  ledMountDiameter: readNumberInput(teaLightDiameterInput, 30, 45, TEA_LIGHT_DIAMETER),
+  ledMountHeight: readNumberInput(teaLightDepthInput, 10, 25, TEA_LIGHT_HEIGHT),
+  wallThickness: readNumberInput(wallThicknessInput, 0.5, 5, 1.6),
+  wallHeight: readNumberInput(wallHeightInput, 10, 120, 25),
+  pillarCount: readNumberInput(angularResolutionInput, 12, 180, 18),
 });
 
-angularResolutionInput.addEventListener('input', updateRangeLabels);
-thresholdInput.addEventListener('input', updateRangeLabels);
+const getStlFormat = (): StlFormat => (stlFormatInput.value === 'ascii' ? 'ascii' : 'binary');
+
+const runProcessing = (successMessage: string): void => {
+  if (!state.image) {
+    return;
+  }
+
+  try {
+    const params = getProcessingParams();
+    state.mask = processImage(state.image, params);
+    setDownloadVisible(true);
+    setInfo(successMessage);
+  } catch (error) {
+    console.error('Error processing image:', error);
+    state.mask = null;
+    setDownloadVisible(false);
+    const message =
+      error instanceof Error ? error.message : 'Error processing image. Please try again.';
+    setInfo(message);
+  }
+};
+
+const processImageImmediately = (startMessage: string, successMessage: string): void => {
+  if (!state.image) {
+    return;
+  }
+  setDownloadVisible(false);
+  setInfo(startMessage);
+  runProcessing(successMessage);
+};
+
+const scheduleProcessing = (startMessage: string, successMessage: string): void => {
+  if (!state.image) {
+    return;
+  }
+  setDownloadVisible(false);
+  setInfo(startMessage);
+  if (processingTimeout !== null) {
+    window.clearTimeout(processingTimeout);
+  }
+  processingTimeout = window.setTimeout(() => {
+    processingTimeout = null;
+    runProcessing(successMessage);
+  }, 150);
+};
+
+const handleRangeInput = (): void => {
+  updateRangeLabels();
+  scheduleProcessing('Processing image...', 'Ready to download.');
+};
+
+angularResolutionInput.addEventListener('input', handleRangeInput);
+thresholdInput.addEventListener('input', handleRangeInput);
 updateRangeLabels();
 
 imageUpload.addEventListener('change', async (event) => {
@@ -146,65 +205,26 @@ imageUpload.addEventListener('change', async (event) => {
 
   resetImageState();
   setInfo('Loading image...');
+  state.fileName = file.name;
 
   try {
     const image = await loadImageFromFile(file);
     const squareCanvas = cropImageToSquare(image);
     state.cropSize = squareCanvas.width;
     state.image = await loadImageFromCanvas(squareCanvas);
-    setProcessEnabled(true);
-    setDownloadVisible(false);
-    setInfo(`Image loaded and cropped to ${state.cropSize}×${state.cropSize}.`);
+    processImageImmediately('Processing image...', 'Ready to download.');
   } catch (error) {
     console.error('Error preparing image:', error);
     setInfo('Could not read or crop the image. Please try another file.');
   }
 });
 
-// Process image
-processBtn.addEventListener('click', () => {
-  if (!state.image) {
-    return;
-  }
-
-  setProcessEnabled(false);
-  setInfo('Processing image...');
-
-  try {
-    const params = getProcessingParams();
-    state.samples = processImage(state.image, params);
-    drawPreview(previewCanvas, state.image, state.samples);
-    setPreviewVisible(true);
-    setDownloadVisible(true);
-    setInfo('Preview ready. Adjust parameters if needed, then download the STL.');
-  } catch (error) {
-    console.error('Error processing image:', error);
-    const message =
-      error instanceof Error ? error.message : 'Error processing image. Please try again.';
-    setInfo(message);
-  } finally {
-    setProcessEnabled(true);
-  }
-});
-
-// Download STL
 downloadBtn.addEventListener('click', () => {
-  if (state.samples.length === 0) {
+  const params = getGeometryParams();
+  if (!state.mask) {
     return;
   }
-
-  const params = getGeometryParams();
-  const blob = exportSTL(state.samples, params);
-  downloadSTL(blob, 'shadow-lamp.stl');
-  setInfo('STL downloaded. Ready to 3D print.');
-});
-
-// Allow reprocessing when parameters change
-[thresholdInput, angularResolutionInput].forEach((input) => {
-  input.addEventListener('change', () => {
-    if (state.image) {
-      setDownloadVisible(false);
-      setInfo('Parameters changed. Click "Process image" to update the preview.');
-    }
-  });
+  const blob = exportSTL(state.mask, params, getStlFormat());
+  const stlFilename = state.fileName ? toStlFilename(state.fileName) : 'shadow-lamp.stl';
+  downloadSTL(blob, stlFilename);
 });
