@@ -208,7 +208,7 @@ When creating commits:
 - **Unit tests**: Not used in this project
 - **E2E tests**: Cypress tests in `cypress/e2e/`
 - **Test fixtures**: Generate with `node scripts/generate-test-fixtures.js`
-- **Test coverage**: See [TESTING.md](./TESTING.md)
+- **Test coverage**: See [docs/TESTING.md](./docs/TESTING.md)
 
 ## Resources
 
