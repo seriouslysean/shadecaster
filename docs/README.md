@@ -16,8 +16,8 @@ Transform silhouette images into 3D-printable shadow lamps that cast beautiful s
 1. **Upload** - Provide a silhouette image (black silhouette on white/transparent background works best)
    - Supported formats: PNG (with transparency support), JPEG, WebP
    - Note: SVG support is not currently implemented
-2. **Process** - Image is converted to binary using threshold, then sampled in polar coordinates from the image center so the center becomes the LED position
-3. **Generate** - The polar samples fold upward into the lamp: radius from the center maps to fin height, and each dark pixel becomes a fin segment that blocks light
+2. **Process** - Image is converted to binary using threshold, then sampled in polar coordinates from the image center
+3. **Generate** - The polar samples wrap upward from the bottom: image center maps to the bottom base, image edge maps to the top opening where the light mounts. The light (LED/tea light) mounts at the top opening facing downward into the dome, shining down and outward through the fins. Dark pixels become fin segments that block this light to project the shadow onto the surface below
 4. **Export** - Download the binary STL file for 3D printing
 
 ## Technical Details
@@ -67,29 +67,31 @@ For detailed testing documentation, see [TESTING.md](./TESTING.md).
 
 ## Parameters
 
-- **Dome Diameter**: Overall diameter of the lamp (default: 60mm, range: 50-200mm)
-- **Dome Height**: Height of the dome structure (default: 40mm, range: 20-150mm)
-- **Fin Thickness**: Thickness of each radial fin (default: 1.2mm, range: 0.5-5mm, min 1.2mm recommended for stability)
-- **Base Height**: Height of the base ring (default: 8mm, range: 5-30mm)
-- **Angular Resolution**: Number of fins/samples (default: 180, range: 24-360, higher = smoother but larger file)
+- **Dome Diameter**: Overall diameter of the lamp (default: 55mm, range: 50-200mm)
+- **Dome Height**: Height of the dome structure (default: 30mm, range: 20-150mm)
+- **Fin Thickness**: Thickness of each radial fin (default: 0.8mm for 0.4mm nozzle, range: 0.5-5mm)
+- **Base Height**: Height of the base ring (default: 5mm, range: 5-30mm)
+- **Angular Resolution**: Number of fins/samples (default: 120, range: 24-360, higher = smoother but larger file)
 - **Image Threshold**: Grayscale threshold for binary conversion (default: 128, range: 0-255, adjust if image is too bright/dark)
-- **LED Mount Diameter**: Center hole for tea light (fixed: 21mm standard tea light)
+- **LED Mount Diameter**: Top opening diameter for tea light mount (fixed: 21mm standard tea light)
 
 ## 3D Printing Tips
 
 ### Print Settings
+- **Nozzle**: 0.4mm standard (defaults optimized for this size)
 - **Layer height**: 0.2mm recommended
 - **Infill**: 15-20%
-- **Wall count**: 3-4 walls minimum (prevents light leakage)
+- **Wall count**: 2-3 walls minimum (prevents light leakage, 0.8mm+ thickness)
 - **Supports**: Not needed
 - **Print orientation**: Base down, no supports required
+- **Print time**: ~30 minutes with optimized defaults (faster with lower resolution)
 
 ### Filament Selection
 - **Material**: PLA works well (easy to print, stable)
 - **Color**: **Use dark or opaque filament** to prevent light leakage through walls
   - Black, dark gray, or other opaque colors work best
   - Avoid translucent or light-colored filaments as they let light through the walls
-- **Minimum fin thickness**: 1.2mm for print stability
+- **Wall thickness**: 0.8mm minimum (2 wall lines @ 0.4mm nozzle) for light blocking and stability
 
 ### Tested Slicers
 - Bambu Studio

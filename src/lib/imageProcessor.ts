@@ -56,7 +56,7 @@ function radialSample(
   const samples: RadialSample[] = [];
   const angleStep = (2 * Math.PI) / angularResolution;
   const radiusToHeight = (radius: number): number =>
-    clamp(1 - radius / maxRadius, 0, 1);
+    clamp(radius / maxRadius, 0, 1);
 
   for (let i = 0; i < angularResolution; i++) {
     const angle = i * angleStep;
