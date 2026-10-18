@@ -56,8 +56,8 @@ const cropImageToSquare = (image: HTMLImageElement): HTMLCanvasElement => {
 const loadImageFromSource = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Could not read the image file.'));
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', () => reject(new Error('Could not read the image file.')));
     image.src = src;
   });
 

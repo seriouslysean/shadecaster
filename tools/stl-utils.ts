@@ -28,6 +28,8 @@ export interface ReadOptions {
   epsilon?: number;
 }
 
+const edgeKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
 export const readBinarySTL = (filePath: string, options: ReadOptions = {}): StlStats => {
   const precision = options.epsilon ?? 1e-5;
   if (!Number.isFinite(precision) || precision <= 0) {
@@ -53,7 +55,6 @@ export const readBinarySTL = (filePath: string, options: ReadOptions = {}): StlS
   const quantize = (value: number): number => Math.round(value / precision);
   const vectorKey = (x: number, y: number, z: number): string =>
     `${quantize(x)},${quantize(y)},${quantize(z)}`;
-  const edgeKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
   const rememberVertex = (key: string, x: number, y: number, z: number): void => {
     if (!vertices.has(key)) {

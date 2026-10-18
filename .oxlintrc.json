@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-console": [
+      "error",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    ".astro",
+    "cypress/screenshots",
+    "cypress/videos",
+    "cypress/downloads"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "scripts/**",
+        "tools/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

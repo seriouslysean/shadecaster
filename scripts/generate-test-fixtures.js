@@ -11,12 +11,9 @@
  */
 
 import { writeFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const fixturesDir = join(__dirname, '..', 'cypress', 'fixtures');
+const fixturesDir = join(import.meta.dirname, '..', 'cypress', 'fixtures');
 
 /**
  * Create a simple PNG using base64 encoding

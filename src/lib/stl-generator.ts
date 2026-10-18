@@ -96,6 +96,9 @@ const validateGeometryParams = (params: GeometryParams): void => {
   }
 };
 
+const interpolateRadius = (from: number, to: number, progress: number): number =>
+  to + (from - to) * Math.cos(progress * (Math.PI / 2));
+
 function generateGeometry(cutout: CutoutMask, params: GeometryParams): Triangle[] {
   if (cutout.columns < 3 || cutout.rows < 3) {
     throw new Error('Cutout mask resolution must be at least 3x3.');
@@ -138,7 +141,7 @@ function generateGeometry(cutout: CutoutMask, params: GeometryParams): Triangle[
   const pillarWidth = Math.min(pillarStep, Math.max(targetPillarWidth, minPillarWidth));
   const pillarHalf = pillarWidth / 2;
 
-  const pillarColumns = new Array<boolean>(columns).fill(false);
+  const pillarColumns = Array.from({ length: columns }, () => false);
   for (let col = 0; col < columns; col++) {
     const angle = (col + 0.5) * angleStep;
     const normalized = (angle + 2 * Math.PI) % (2 * Math.PI);
@@ -257,9 +260,6 @@ function generateGeometry(cutout: CutoutMask, params: GeometryParams): Triangle[
   const domeSegments = columns;
   const domeAngleStep = angleStep;
   const domeSteps = Math.max(8, Math.round(domeSegments / 6));
-  const interpolateRadius = (from: number, to: number, progress: number): number =>
-    to + (from - to) * Math.cos(progress * (Math.PI / 2));
-
   for (let step = 0; step < domeSteps; step++) {
     const t1 = step / domeSteps;
     const t2 = (step + 1) / domeSteps;

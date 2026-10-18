@@ -89,7 +89,7 @@ if (files.length !== 2) {
 
 const formatHistogram = (histogram: Map<number, number>): string =>
   Array.from(histogram.entries())
-    .sort((a, b) => a[0] - b[0])
+    .toSorted((a, b) => a[0] - b[0])
     .map(([count, total]) => `${count}:${total}`)
     .join(' ');
 
