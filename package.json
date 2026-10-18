@@ -8,8 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "eslint . --ext .ts,.astro",
-    "lint:fix": "eslint . --ext .ts,.astro --fix",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "echo 'No unit tests yet' && exit 0",
@@ -28,13 +28,10 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.71.2",
-    "@typescript-eslint/parser": "^8.53.0",
     "astro": "^5.16.11",
     "cypress": "^15.9.0",
-    "eslint": "^9.39.2",
-    "eslint-plugin-astro": "^1.5.0",
+    "oxlint": "^1.88.0",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
