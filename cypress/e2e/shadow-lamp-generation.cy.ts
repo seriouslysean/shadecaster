@@ -16,24 +16,23 @@ describe('Shadow Lamp Generator', () => {
     cy.contains('Shadecaster').should('be.visible');
     cy.contains('Shadow lamp STL generator').should('be.visible');
 
-    // Core form elements exist
+    // Core form elements exist; the download button stays hidden until an STL is ready
     cy.get('#image-upload').should('exist');
-    cy.get('#process-btn').should('exist').and('be.disabled');
+    cy.get('#download-btn').should('exist').and('not.be.visible');
 
     // Control inputs exist with correct defaults
-    cy.get('#dome-diameter').should('have.value', '55');
-    cy.get('#dome-height').should('have.value', '30');
-    cy.get('#fin-thickness').should('have.value', '0.8');
-    cy.get('#base-height').should('have.value', '5');
-    cy.get('#angular-resolution').should('have.value', '120');
+    cy.get('#dome-diameter').should('have.value', '60');
+    cy.get('#dome-height').should('have.value', '20');
+    cy.get('#angular-resolution').should('have.value', '18');
+    cy.get('#threshold').should('have.value', '128');
   });
 
   it('should update control value displays', () => {
     cy.visit('/');
 
     // Angular resolution display updates
-    cy.get('#angular-resolution').invoke('val', 90).trigger('input');
-    cy.get('#angular-value').should('contain', '90 fins');
+    cy.get('#angular-resolution').invoke('val', 24).trigger('input');
+    cy.get('#angular-value').should('contain', '24 angles');
 
     // Threshold display updates
     cy.get('#threshold').invoke('val', 200).trigger('input');

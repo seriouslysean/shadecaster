@@ -33,6 +33,9 @@ const files: string[] = [];
 
 for (let i = 0; i < args.length; i += 1) {
   const arg = args[i];
+  if (arg === undefined) {
+    continue;
+  }
   if (arg === '--eps' || arg === '--epsilon') {
     const value = args[i + 1];
     if (!value) {
