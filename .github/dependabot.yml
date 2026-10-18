@@ -23,7 +23,8 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
     ignore:
-      # TypeScript 6.1 and later wait for typescript-eslint, which (at 8.71.2) only
-      # accepts TypeScript below 6.1. Remove this once it supports newer versions.
+      # Held at TypeScript 6: Cypress compiles the .ts specs with ts-loader, which needs the
+      # TypeScript JS API that TypeScript 7 drops (ts-loader fails reading `fileExists`).
+      # Remove this once Cypress supports TypeScript 7.
       - dependency-name: "typescript"
-        versions: [">=6.1.0"]
+        update-types: ["version-update:semver-major"]

@@ -13,7 +13,7 @@ export interface ProcessingParams {
 
 const toBinary = (imageData: ImageData, threshold: number): boolean[][] => {
   const { width, height, data } = imageData;
-  const binary: boolean[][] = Array.from({ length: height }, () => new Array<boolean>(width));
+  const binary: boolean[][] = Array.from({ length: height }, () => Array.from({ length: width }, () => false));
 
   for (let y = 0; y < height; y++) {
     const row = binary[y];
@@ -122,7 +122,7 @@ const buildRadialMask = (
   const angleStep = (2 * Math.PI) / columns;
   const rowDenominator = Math.max(rows - 1, 1);
 
-  const mask: boolean[][] = Array.from({ length: rows }, () => new Array<boolean>(columns));
+  const mask: boolean[][] = Array.from({ length: rows }, () => Array.from({ length: columns }, () => false));
 
   for (let row = 0; row < rows; row++) {
     const rowData = mask[row];
