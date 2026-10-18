@@ -22,3 +22,8 @@ updates:
       npm:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 6.1 and later wait for typescript-eslint, which (at 8.71.2) only
+      # accepts TypeScript below 6.1. Remove this once it supports newer versions.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
