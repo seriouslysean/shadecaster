@@ -1,0 +1,115 @@
+name: Dependabot auto-merge
+
+# Merges a Dependabot PR once every check on it is green, if each bumped
+# dependency is a semver patch or minor update (read from the update-type
+# metadata Dependabot puts in its commit messages). Majors, PRs without that
+# metadata, PRs with commits that aren't Dependabot's, and PRs whose head moved
+# since the check ran stay open for a person.
+#
+# workflow_run, not pull_request: Dependabot's pull_request runs get a
+# read-only token. This runs from the copy on main, so edits take effect after
+# merge. Adapted from craftalog's dependabot-auto-merge.yml.
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+# One merge at a time: when several Dependabot PRs go green together, the
+# first merge conflicts the rest; Dependabot rebases them, checks rerun, and
+# this fires again for each.
+concurrency:
+  group: dependabot-auto-merge
+
+jobs:
+  auto-merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate on the PR's checks and Dependabot metadata
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          skip() {
+            echo "$1 - leaving the PR for manual review."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          owner="${GH_REPO%%/*}"
+          pr=$(gh api "repos/${GH_REPO}/pulls?head=${owner}:${BRANCH}&state=open" --jq '.[0] // empty')
+          [ -n "$pr" ] || skip "No open PR for ${BRANCH} (already merged or closed)"
+
+          number=$(jq -r '.number' <<<"$pr")
+          author=$(jq -r '.user.login' <<<"$pr")
+          head=$(jq -r '.head.sha' <<<"$pr")
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+          [ "$author" = "dependabot[bot]" ] || skip "PR #${number} was not opened by Dependabot (${author})"
+          [ "$head" = "$HEAD_SHA" ] || skip "PR #${number} head moved since this check ran"
+
+          # Every check run on the head commit must be finished and green, not
+          # just the workflow that fired this run.
+          checks=$(gh api "repos/${GH_REPO}/commits/${HEAD_SHA}/check-runs" --paginate \
+            --jq '.check_runs[] | {status, conclusion}')
+          pending=$(jq -rs '[.[] | select(.status != "completed")] | length' <<<"$checks")
+          [ "$pending" = "0" ] || skip "PR #${number} still has ${pending} check(s) running; the last one to finish fires this again"
+          bad=$(jq -rs '[.[] | select(.conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral")] | length' <<<"$checks")
+          [ "$bad" = "0" ] || skip "PR #${number} has ${bad} check(s) that didn't pass"
+
+          commits=$(gh api "repos/${GH_REPO}/pulls/${number}/commits" --paginate \
+            --jq '.[] | {author: .author.login, message: .commit.message}')
+          non_bot=$(jq -rs '[.[] | select(.author != "dependabot[bot]")] | length' <<<"$commits")
+          [ "$non_bot" = "0" ] || skip "PR #${number} has ${non_bot} commit(s) not authored by Dependabot"
+
+          types=$(jq -rs '.[].message' <<<"$commits" \
+            | grep -oE 'update-type: version-update:semver-(patch|minor|major)' \
+            | sed 's/.*semver-//' | sort -u)
+          [ -n "$types" ] || skip "PR #${number} has no update-type metadata"
+          if grep -qx 'major' <<<"$types"; then skip "PR #${number} contains a semver-major bump"; fi
+
+          echo "PR #${number} is a Dependabot $(echo "$types" | tr '\n' '/' | sed 's#/$##') bump with every check green; merging."
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Merge the PR
+        if: steps.gate.outputs.proceed == 'true'
+        id: merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.gate.outputs.number }}
+        run: |
+          if gh pr merge "$NUMBER" --squash --delete-branch; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          state=$(gh api "repos/${GH_REPO}/pulls/${NUMBER}" --jq '.mergeable_state')
+          if [ "$state" = "dirty" ]; then
+            echo "PR #${NUMBER} conflicts after another merge; Dependabot will rebase it and checks will rerun."
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::error::Merging PR #${NUMBER} failed (mergeable_state=${state})."
+          exit 1
+
+      - name: Deploy the merged change
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # A merge made with GITHUB_TOKEN starts no workflows, so the
+          # push-to-main deploy would not run. workflow_dispatch is exempt.
+          gh workflow run deploy.yml --ref main
