@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Generate test fixtures for Cypress E2E tests
+ * Generate test fixtures for the Playwright E2E tests
  *
  * This script creates simple PNG images for testing:
  * - test-circle.png: Black circle on transparent background
@@ -13,7 +13,7 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-const fixturesDir = join(import.meta.dirname, '..', 'cypress', 'fixtures');
+const fixturesDir = join(import.meta.dirname, '..', 'tests', 'e2e', 'fixtures');
 
 /**
  * Create a simple PNG using base64 encoding

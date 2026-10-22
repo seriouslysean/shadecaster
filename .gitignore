@@ -31,6 +31,5 @@ Thumbs.db
 /tmp/
 
 # Testing
-cypress/downloads/
-cypress/screenshots/
-cypress/videos/
+playwright-report/
+test-results/
