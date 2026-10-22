@@ -28,7 +28,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "astro": "^5.16.11",
+    "astro": "^7.4.2",
     "cypress": "^15.9.0",
     "oxlint": "^1.88.0",
     "tsx": "^4.23.15",
