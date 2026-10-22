@@ -19,9 +19,8 @@
     "dist",
     "node_modules",
     ".astro",
-    "cypress/screenshots",
-    "cypress/videos",
-    "cypress/downloads"
+    "playwright-report",
+    "test-results"
   ],
   "overrides": [
     {

@@ -22,9 +22,3 @@ updates:
       npm:
         patterns: ["*"]
         update-types: [minor, patch]
-    ignore:
-      # Held at TypeScript 6: Cypress compiles the .ts specs with ts-loader, which needs the
-      # TypeScript JS API that TypeScript 7 drops (ts-loader fails reading `fileExists`).
-      # Remove this once Cypress supports TypeScript 7.
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
