@@ -6,7 +6,7 @@ const PORT = Number(process.env.E2E_PORT) || 4517;
 const BASE_URL = `http://localhost:${PORT}/shadecaster/`;
 
 export default defineConfig({
-  testDir: 'tests/e2e',
+  testDir: 'tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
