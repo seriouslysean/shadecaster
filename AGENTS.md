@@ -50,7 +50,7 @@ npm run ci
 
 Runs lint + type-check + build in one command (same as CI pipeline).
 
-### 5. E2E Tests (Manual)
+### 5. E2E Tests
 
 E2E tests are Playwright specs in `tests/e2e/`. Playwright starts `astro preview` itself (see `playwright.config.ts`), so build first. CI does the same.
 
@@ -136,7 +136,8 @@ npm ci
 npx playwright install chromium
 ```
 
-### Port 4321 Already in Use
+### Port Already in Use
+`astro dev` and `npm run preview` use 4321; E2E uses 4517, or `E2E_PORT` when set (`playwright.config.ts`).
 ```bash
 lsof -ti:4321 | xargs kill
 ```
