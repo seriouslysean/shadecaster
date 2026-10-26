@@ -91,8 +91,9 @@ src/
 ├── pages/              # Astro pages (UI)
 │   └── index.astro    # Main application page
 ├── lib/               # Core logic modules
-│   ├── imageProcessor.ts  # Image processing and radial sampling
-│   └── stlGenerator.ts    # STL file generation
+│   ├── image-processor.ts # Image processing and radial sampling
+│   ├── stl-generator.ts   # STL file generation
+│   └── utils.ts           # Shared helpers
 └── main.ts            # Client-side application logic
 
 tests/
@@ -126,8 +127,8 @@ npm run preview
 
 ### Dependencies Not Found
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules
+npm ci
 ```
 
 ### Playwright Browser Missing
