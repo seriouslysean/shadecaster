@@ -16,7 +16,7 @@ Image center maps to the base. Image edge maps to the top opening where the ligh
 
 ```bash
 # Install dependencies
-npm install
+npm ci
 
 # Start dev server
 npm run dev
