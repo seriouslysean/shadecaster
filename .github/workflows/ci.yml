@@ -117,29 +117,36 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # Squash-merges a Dependabot PR once the jobs above pass, if every update is a
-  # patch or minor (fastify/github-action-merge-dependabot, pinned to v3.15.0).
-  # Majors and anything not Dependabot's stay open for a person.
+  # Squash-merges a Dependabot PR once the jobs above pass, if the update is a
+  # patch or minor: GitHub's documented pattern (dependabot/fetch-metadata, then
+  # gh pr merge), pinned to the head that was checked. Majors and anything not
+  # Dependabot's stay open for a person. A new PR job goes in needs: too, or
+  # this merges before it finishes.
   automerge:
     name: 'Dependabot auto-merge'
     needs: [lint, type-check, build, e2e]
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
       actions: write
     steps:
+      - name: 'Read the update type'
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
       - name: 'Merge minor and patch updates'
         id: merge
-        uses: fastify/github-action-merge-dependabot@73ec4cbb5e56df5591eae286972d5b2201ffe90f # v3.15.0
-        with:
-          target: minor
-          merge-method: squash
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge --squash --match-head-commit "$HEAD_SHA" "$PR_URL"
       # A merge made with GITHUB_TOKEN starts no workflows, so the push-to-main
       # deploy would not run. workflow_dispatch is exempt.
       - name: 'Deploy the merged change'
-        if: steps.merge.outputs.merge_status == 'merged'
+        if: steps.merge.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
