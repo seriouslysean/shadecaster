@@ -116,3 +116,31 @@ jobs:
           name: playwright-test-results
           path: test-results/
           retention-days: 7
+
+  # Squash-merges a Dependabot PR once the jobs above pass, if every update is a
+  # patch or minor (fastify/github-action-merge-dependabot, pinned to v3.15.0).
+  # Majors and anything not Dependabot's stay open for a person.
+  automerge:
+    name: 'Dependabot auto-merge'
+    needs: [lint, type-check, build, e2e]
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: 'Merge minor and patch updates'
+        id: merge
+        uses: fastify/github-action-merge-dependabot@73ec4cbb5e56df5591eae286972d5b2201ffe90f # v3.15.0
+        with:
+          target: minor
+          merge-method: squash
+      # A merge made with GITHUB_TOKEN starts no workflows, so the push-to-main
+      # deploy would not run. workflow_dispatch is exempt.
+      - name: 'Deploy the merged change'
+        if: steps.merge.outputs.merge_status == 'merged'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy.yml --ref main
