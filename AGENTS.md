@@ -108,6 +108,7 @@ scripts/               # test fixture generator
 - **Small functions**: Each function should do one thing well
 - **Type everything**: No `any` types, strict TypeScript
 - **Test coverage**: Add E2E tests for user-facing features
+- **Writing tests**: Before writing or changing a test, read https://github.com/splitleafhq/.github/blob/main/docs/testing.md.
 - **Comments**: Only where logic isn't self-evident
 
 ## Common Tasks
