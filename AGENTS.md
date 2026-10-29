@@ -74,7 +74,7 @@ ALL validation steps must pass before:
 ### Tech Stack
 - **Framework**: Astro (static site generator)
 - **Language**: TypeScript strict mode (ES2023+)
-- **Testing**: Playwright (E2E tests only)
+- **Testing**: Playwright (`tests/e2e/` in the browser, `tests/spec/` against `src/lib`)
 - **Linting**: oxlint
 - **Deployment**: GitHub Pages via GitHub Actions
 
@@ -97,7 +97,8 @@ src/
 └── main.ts            # Client-side application logic
 
 tests/
-└── e2e/               # Playwright specs and fixtures (images)
+├── e2e/               # Playwright specs and fixtures (images)
+└── spec/              # Math spec tests (see docs/TESTING.md)
 
 tools/                 # stl-diff and STL utilities
 scripts/               # test fixture generator
@@ -107,7 +108,7 @@ scripts/               # test fixture generator
 - **No duplication**: Extract shared logic into reusable functions
 - **Small functions**: Each function should do one thing well
 - **Type everything**: No `any` types, strict TypeScript
-- **Test coverage**: Add E2E tests for user-facing features
+- **Writing tests**: Before writing or changing a test, read https://github.com/splitleafhq/.github/blob/main/docs/testing.md.
 - **Comments**: Only where logic isn't self-evident
 
 ## Common Tasks

@@ -4,11 +4,7 @@ This document describes the testing infrastructure for Shadecaster.
 
 ## Testing Philosophy
 
-We follow a focused testing approach:
-
-- **E2E Tests (Playwright)**: Test the complete user journey from upload to STL download
-- **No Test Duplication**: Focus on integration tests rather than unit tests for individual functions
-- **Real Browser Testing**: Validate actual user workflows in a real browser environment
+Follow the shared testing rules: https://github.com/splitleafhq/.github/blob/main/docs/testing.md. Browser tests in `tests/e2e/` cover the user journey from upload to STL download. Math spec tests in `tests/spec/` call `src/lib` directly. A regression gets one test, at the layer where the bug lives.
 
 ## Test Structure
 
