@@ -31,12 +31,12 @@ npm run preview
 ### Testing
 
 ```bash
-# Run lint + type-check + build
+# Run lint + typecheck + build
 npm run ci
 
 # Or run checks individually
 npm run lint
-npm run type-check
+npm run typecheck
 npm run build
 ```
 
