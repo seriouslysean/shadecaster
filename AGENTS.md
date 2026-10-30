@@ -3,7 +3,7 @@
 Instructions for agents working on the Shadecaster codebase.
 
 - Install: `npm ci` (Node version in `.nvmrc`).
-- Gate before a PR: `npm run ci` (lint, type-check, build). CI also runs `npm run test:e2e` after a build (see the E2E section).
+- Gate before a PR: `npm run ci` (lint, typecheck, build). CI also runs `npm run test:e2e` after a build (see the E2E section).
 - Where things live: see Directory Structure below; guides are in `docs/`.
 
 ## Pre-Development Setup
@@ -29,7 +29,7 @@ Checks code quality and enforces consistent style.
 ### 2. Type Checking
 
 ```bash
-npm run type-check
+npm run typecheck
 ```
 
 Validates TypeScript types in strict mode.
@@ -48,7 +48,7 @@ Ensures the project builds successfully for production.
 npm run ci
 ```
 
-Runs lint + type-check + build in one command (same as CI pipeline).
+Runs lint + typecheck + build in one command (same as CI pipeline).
 
 ### 5. E2E Tests
 

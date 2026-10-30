@@ -1,18 +1,26 @@
-name: PR Checks
+name: CI
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-{1}', github.workflow, github.head_ref) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint:
-    name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -25,16 +33,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
+      - name: Run oxlint
         run: npm run lint
 
-  type-check:
-    name: Type Check
+  typecheck:
     runs-on: ubuntu-latest
-    needs: lint
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -48,15 +57,16 @@ jobs:
         run: npm ci
 
       - name: Run type check
-        run: npm run type-check
+        run: npm run typecheck
 
   build:
-    name: Build
     runs-on: ubuntu-latest
-    needs: type-check
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -80,10 +90,9 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
+    timeout-minutes: 15
+        steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,9 +133,10 @@ jobs:
   # this merges before it finishes.
   automerge:
     name: 'Dependabot auto-merge'
-    needs: [lint, type-check, build, e2e]
+    needs: [lint, typecheck, build, e2e]
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
