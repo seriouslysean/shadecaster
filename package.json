@@ -8,16 +8,16 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "oxlint .",
+    "lint": "oxlint --deny-warnings .",
     "lint:fix": "oxlint . --fix",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "echo 'No unit tests yet' && exit 0",
     "test:e2e": "playwright test",
-    "ci": "npm run lint && npm run type-check && npm run build",
-    "prepare": "lefthook install",
+    "ci": "npm run lint && npm run typecheck && npm run build",
     "tools:stl-diff": "tsx tools/stl-diff.ts",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "prepare": "lefthook install"
   },
   "keywords": [
     "astro",
@@ -30,9 +30,9 @@
   "devDependencies": {
     "@playwright/test": "^1.64.0",
     "@types/node": "^24.1.0",
-    "astro": "^7.4.2",
+    "astro": "^7.4.4",
     "lefthook": "^2.2.2",
-    "oxlint": "^1.89.0",
+    "oxlint": "^1.90.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
