@@ -1,0 +1,8 @@
+# Runs the checks CI runs before a push. `npm install` enables it, through the `prepare` script.
+# git exports repo-local variables such as GIT_DIR to a hook; from a linked worktree they point tools at the wrong repository.
+pre-push:
+  commands:
+    ci:
+      run: |
+        unset $(git rev-parse --local-env-vars)
+        npm run ci && npm run test:e2e
