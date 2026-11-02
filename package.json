@@ -16,8 +16,7 @@
     "test:e2e": "playwright test",
     "ci": "npm run lint && npm run typecheck && npm run build",
     "tools:stl-diff": "tsx tools/stl-diff.ts",
-    "test:e2e:ui": "playwright test --ui",
-    "prepare": "lefthook install"
+    "test:e2e:ui": "playwright test --ui"
   },
   "keywords": [
     "astro",

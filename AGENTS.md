@@ -4,7 +4,7 @@ Instructions for agents working on the Shadecaster codebase.
 
 - Install: `npm ci` (Node version in `.nvmrc`).
 - Gate before a PR: `npm run ci` (lint, typecheck, build). CI also runs `npm run test:e2e` after a build (see the E2E section).
-- Pre-push hook: `npm ci` installs a Lefthook `pre-push` hook (`lefthook.yml`) that runs `npm run ci` and `npm run test:e2e`. Never skip it.
+- Pre-push hook: `npm ci` installs a Lefthook `pre-push` hook (`lefthook.yml`) that runs `npm run ci` and `npm run test:e2e`; if it is missing, run `npx lefthook install`. Never skip it.
 - Where things live: see Directory Structure below; guides are in `docs/`.
 
 ## Pre-Development Setup
