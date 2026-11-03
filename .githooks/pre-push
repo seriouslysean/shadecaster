@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# pre-push: run scripts/check, what CI runs. Enable once per clone:
+#   git config core.hooksPath .githooks
+# Never skip it: a failure here is one CI would report.
+set -euo pipefail
+# Git's repo variables break tools run from a linked worktree.
+# shellcheck disable=SC2046
+unset $(git rev-parse --local-env-vars)
+cd "$(git rev-parse --show-toplevel)"
+# The check tests this working tree, so it must be exactly what is pushed.
+head=$(git rev-parse HEAD)
+while read -r _ sha _ _; do
+  [[ $sha == 0000000000000000000000000000000000000000 || $sha == "$head" ]] && continue
+  echo "pre-push: pushing $sha but HEAD is $head; check out the branch you push" >&2
+  exit 1
+done
+if [[ -n $(git status --porcelain) ]]; then
+  echo "pre-push: uncommitted changes; commit or stash them so the check tests what is pushed" >&2
+  exit 1
+fi
+exec scripts/check

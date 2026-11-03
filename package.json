@@ -30,7 +30,6 @@
     "@playwright/test": "^1.64.0",
     "@types/node": "^24.1.0",
     "astro": "^7.4.4",
-    "lefthook": "^2.2.2",
     "oxlint": "^1.90.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

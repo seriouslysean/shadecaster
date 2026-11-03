@@ -1,0 +1,13 @@
+#!/bin/sh
+# Runs what CI runs; prints one line per step and exits nonzero if any step failed.
+status=0
+for step in lint typecheck build test:e2e; do
+  if out=$(npm run --silent "$step" 2>&1); then
+    echo "ok   $step"
+  else
+    echo "FAIL $step"
+    echo "$out"
+    status=1
+  fi
+done
+exit $status
