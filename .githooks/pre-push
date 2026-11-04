@@ -10,7 +10,9 @@ cd "$(git rev-parse --show-toplevel)"
 # The check tests this working tree, so it must be exactly what is pushed.
 head=$(git rev-parse HEAD)
 while read -r _ sha _ _; do
-  [[ $sha == 0000000000000000000000000000000000000000 || $sha == "$head" ]] && continue
+  # A deleted ref sends zeros; an annotated tag sends its tag object, so compare the commit it names.
+  [[ $sha == 0000000000000000000000000000000000000000 ]] && continue
+  [[ $(git rev-parse "$sha^{commit}") == "$head" ]] && continue
   echo "pre-push: pushing $sha but HEAD is $head; check out the branch you push" >&2
   exit 1
 done
