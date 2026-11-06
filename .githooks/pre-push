@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # pre-push: run scripts/check, what CI runs. Enable once per clone:
 #   git config core.hooksPath .githooks
-# Never skip it: a failure here is one CI would report.
+# Never skip it: a failure here is one CI would report. This file is the template every repo
+# copies byte for byte from splitleafhq/.github; change it there, where scripts/test-pre-push tests it.
 set -euo pipefail
 # Git's repo variables break tools run from a linked worktree.
 # shellcheck disable=SC2046
