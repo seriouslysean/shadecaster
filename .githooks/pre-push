@@ -17,7 +17,9 @@ while read -r _ sha _ _; do
   echo "pre-push: pushing $sha but HEAD is $head; check out the branch you push" >&2
   exit 1
 done
-if [[ -n $(git status --porcelain) ]]; then
+# Its own line, so set -e refuses the push when status itself fails.
+status=$(git status --porcelain)
+if [[ -n $status ]]; then
   echo "pre-push: uncommitted changes; commit or stash them so the check tests what is pushed" >&2
   exit 1
 fi
