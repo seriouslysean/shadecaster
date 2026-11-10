@@ -127,37 +127,28 @@ jobs:
           retention-days: 7
 
   # Squash-merges a Dependabot PR once the jobs above pass, if the update is a
-  # patch or minor: GitHub's documented pattern (dependabot/fetch-metadata, then
-  # gh pr merge), pinned to the head that was checked. Majors and anything not
-  # Dependabot's stay open for a person. A new PR job goes in needs: too, or
+  # patch or minor. The steps live in splitleafhq/.github. Majors and anything
+  # not Dependabot's stay open for a person. A new job goes in needs: too, or
   # this merges before it finishes.
   automerge:
-    name: 'Dependabot auto-merge'
     needs: [lint, typecheck, build, e2e]
     if: github.event.pull_request.user.login == 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
+    uses: splitleafhq/.github/.github/workflows/dependabot-auto-merge.yml@df79f9cdda9b7d48e3c8f28d1c1f8c70c5397ff9 # main at #21
+
+  # A merge made with GITHUB_TOKEN starts no workflows, so the push-to-main
+  # deploy would not run. workflow_dispatch is exempt.
+  deploy-merged:
+    needs: automerge
+    if: needs.automerge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
       actions: write
     steps:
-      - name: 'Read the update type'
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-      - name: 'Merge minor and patch updates'
-        id: merge
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: gh pr merge --squash --match-head-commit "$HEAD_SHA" "$PR_URL"
-      # A merge made with GITHUB_TOKEN starts no workflows, so the push-to-main
-      # deploy would not run. workflow_dispatch is exempt.
-      - name: 'Deploy the merged change'
-        if: steps.merge.outcome == 'success'
-        env:
+      - env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh workflow run deploy.yml --ref main
