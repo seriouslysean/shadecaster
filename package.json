@@ -27,10 +27,10 @@
   "author": "Sean Kennedy",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.65.0",
     "@types/node": "^24.1.0",
-    "astro": "^7.4.7",
-    "oxlint": "^1.91.0",
+    "astro": "^7.4.11",
+    "oxlint": "^1.93.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
