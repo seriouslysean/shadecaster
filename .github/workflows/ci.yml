@@ -136,7 +136,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: splitleafhq/.github/.github/workflows/dependabot-auto-merge.yml@df79f9cdda9b7d48e3c8f28d1c1f8c70c5397ff9 # main at #21
+    uses: splitleafhq/.github/.github/workflows/dependabot-auto-merge.yml@2ff5d9c790d0f53d8501f3cceb1ad20de5261565 # main at #22
 
   # A merge made with GITHUB_TOKEN starts no workflows, so the push-to-main
   # deploy would not run. workflow_dispatch is exempt.
