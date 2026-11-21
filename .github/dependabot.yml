@@ -18,6 +18,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # @types/node follows the Node major the code runs on (24). Lift this when it moves to 26.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       npm:
         patterns: ["*"]
