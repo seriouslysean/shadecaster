@@ -4,6 +4,9 @@
     "correctness": "error",
     "suspicious": "warn"
   },
+  "options": {
+    "denyWarnings": true
+  },
   "rules": {
     "no-console": [
       "error",
